@@ -20,13 +20,7 @@ repositories {
 }
 
 dependencies {
-    // Use the Kotlin JUnit 5 integration.
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-
-    // Use the JUnit 5 integration.
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.9.1")
-
-    // This dependency is used by the application.
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     implementation("io.arrow-kt:arrow-core:1.2.1")
 }
 
