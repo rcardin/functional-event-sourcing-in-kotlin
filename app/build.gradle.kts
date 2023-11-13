@@ -27,7 +27,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.9.1")
 
     // This dependency is used by the application.
-    implementation("com.google.guava:guava:31.1-jre")
+    implementation("io.arrow-kt:arrow-core:1.2.1")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
