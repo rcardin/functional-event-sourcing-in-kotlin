@@ -21,6 +21,7 @@ repositories {
 
 dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+    testImplementation("io.kotest.extensions:kotest-assertions-arrow:1.4.0")
     implementation("io.arrow-kt:arrow-core:1.2.1")
 }
 

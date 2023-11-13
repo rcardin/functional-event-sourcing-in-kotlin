@@ -3,6 +3,22 @@
  */
 package `in`.rcard.fes
 
+import arrow.core.Either
+import arrow.core.NonEmptyList
+import arrow.core.nonEmptyListOf
+import arrow.core.raise.either
+
+fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
+    when (command) {
+        is PortfolioCommand.CreatePortfolio -> either {
+            if (!portfolio.initial) {
+                raise(PortfolioError.PortfolioAlreadyExists(portfolio.id))
+            }
+            // FIXME How to generate a new PortfolioId?
+            nonEmptyListOf(PortfolioEvent.PortfolioCreated(PortfolioId("1"), command.userId, command.amount))
+        }
+    }
+
 fun main() {
     println("Hello World!")
 }
