@@ -9,8 +9,8 @@ A toy project to explore the capabilities of functional event-sourcing using Kot
 
 The project try to implement the following user stories. The domain is a simplified stock trading system.
 
-- [ ] A user should create a new portfolio.
-- [ ] A user should buy stocks for an existing portfolio.
+- [x] A user should create a new portfolio.
+- [x] A user should buy stocks for an existing portfolio.
 - [ ] A user should sell stocks that it owns.
 
 ## Event Storming / Domain Modeling
