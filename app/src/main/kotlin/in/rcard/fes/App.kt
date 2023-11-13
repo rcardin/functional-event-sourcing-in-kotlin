@@ -14,10 +14,17 @@ fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioErr
             if (!portfolio.initial) {
                 raise(PortfolioError.PortfolioAlreadyExists(portfolio.id))
             }
-            // FIXME How to generate a new PortfolioId?
-            nonEmptyListOf(PortfolioEvent.PortfolioCreated(PortfolioId("1"), command.userId, command.amount))
+            nonEmptyListOf(
+                PortfolioEvent.PortfolioCreated(
+                    PortfolioId("${command.userId}-1"),
+                    command.userId,
+                    command.amount,
+                ),
+            )
         }
     }
+
+fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio + event
 
 fun main() {
     println("Hello World!")

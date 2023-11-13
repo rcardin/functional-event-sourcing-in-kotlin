@@ -7,7 +7,9 @@ typealias Portfolio = List<PortfolioEvent>
 value class PortfolioId(private val id: String)
 
 @JvmInline
-value class UserId(private val id: String)
+value class UserId(private val id: String) {
+    override fun toString(): String = id
+}
 
 @JvmInline
 value class Money(private val amount: Double)
