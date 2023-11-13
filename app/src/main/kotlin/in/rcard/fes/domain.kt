@@ -22,8 +22,25 @@ val Portfolio.id: PortfolioId
 
 val notCreatedPortfolio: List<PortfolioEvent> = emptyList()
 
+@JvmInline
+value class Stock(private val symbol: String)
+
+@JvmInline
+value class Quantity(private val amount: Int)
+
 sealed interface PortfolioCommand {
     data class CreatePortfolio(val userId: UserId, val amount: Money) : PortfolioCommand
+
+    sealed interface PortfolioCommandWithPortfolioId : PortfolioCommand {
+        val portfolioId: PortfolioId
+
+        data class BuyStocks(
+            override val portfolioId: PortfolioId,
+            val stock: Stock,
+            val quantity: Quantity,
+            val price: Money,
+        ) : PortfolioCommandWithPortfolioId
+    }
 }
 
 sealed interface PortfolioEvent {
@@ -31,6 +48,13 @@ sealed interface PortfolioEvent {
 
     data class PortfolioCreated(override val portfolioId: PortfolioId, val userId: UserId, val money: Money) :
         PortfolioEvent
+
+    data class StocksPurchased(
+        override val portfolioId: PortfolioId,
+        val stock: Stock,
+        val quantity: Quantity,
+        val price: Money,
+    ) : PortfolioEvent
 }
 
 sealed interface PortfolioError {

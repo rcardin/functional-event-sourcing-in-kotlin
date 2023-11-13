@@ -7,22 +7,30 @@ import arrow.core.Either
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
+import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
+import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
 
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
     when (command) {
-        is PortfolioCommand.CreatePortfolio -> either {
-            if (!portfolio.initial) {
-                raise(PortfolioError.PortfolioAlreadyExists(portfolio.id))
-            }
-            nonEmptyListOf(
-                PortfolioEvent.PortfolioCreated(
-                    PortfolioId("${command.userId}-1"),
-                    command.userId,
-                    command.amount,
-                ),
-            )
-        }
+        is CreatePortfolio -> cratePortfolio(portfolio, command)
+        is BuyStocks -> TODO()
     }
+
+private fun cratePortfolio(
+    portfolio: Portfolio,
+    command: CreatePortfolio,
+) = either {
+    if (!portfolio.initial) {
+        raise(PortfolioError.PortfolioAlreadyExists(portfolio.id))
+    }
+    nonEmptyListOf(
+        PortfolioEvent.PortfolioCreated(
+            PortfolioId("${command.userId}-1"),
+            command.userId,
+            command.amount,
+        ),
+    )
+}
 
 fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio + event
 
