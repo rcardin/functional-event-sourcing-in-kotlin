@@ -12,13 +12,28 @@ value class UserId(private val id: String) {
 }
 
 @JvmInline
-value class Money(private val amount: Double)
+value class Money(private val amount: Double) {
+    operator fun minus(money: Money): Money = Money(this.amount - money.amount)
+    operator fun times(quantity: Quantity): Money = Money(this.amount * quantity.amount)
+    operator fun compareTo(money: Money): Int = when {
+        this.amount > money.amount -> 1
+        this.amount < money.amount -> -1
+        else -> 0
+    }
+}
 
-val Portfolio.initial: Boolean
-    get() = this.isEmpty()
+fun Portfolio.isAvailable(): Boolean = this.isNotEmpty()
 
 val Portfolio.id: PortfolioId
     get() = this.first().portfolioId
+
+fun Portfolio.availableFunds(): Money =
+    this.fold(Money(0.0)) { acc, event ->
+        when (event) {
+            is PortfolioEvent.PortfolioCreated -> event.money
+            is PortfolioEvent.StocksPurchased -> acc - (event.price * event.quantity)
+        }
+    }
 
 val notCreatedPortfolio: List<PortfolioEvent> = emptyList()
 
@@ -26,7 +41,7 @@ val notCreatedPortfolio: List<PortfolioEvent> = emptyList()
 value class Stock(private val symbol: String)
 
 @JvmInline
-value class Quantity(private val amount: Int)
+value class Quantity(val amount: Int)
 
 sealed interface PortfolioCommand {
     data class CreatePortfolio(val userId: UserId, val amount: Money) : PortfolioCommand
@@ -61,4 +76,9 @@ sealed interface PortfolioError {
     val portfolioId: PortfolioId
 
     data class PortfolioAlreadyExists(override val portfolioId: PortfolioId) : PortfolioError
+
+    data class PortfolioNotAvailable(override val portfolioId: PortfolioId) : PortfolioError
+
+    data class InsufficientFunds(override val portfolioId: PortfolioId, val requested: Money, val owned: Money) :
+        PortfolioError
 }

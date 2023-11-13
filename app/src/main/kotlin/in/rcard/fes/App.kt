@@ -9,18 +9,41 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
+import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
 
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
     when (command) {
-        is CreatePortfolio -> cratePortfolio(portfolio, command)
-        is BuyStocks -> TODO()
+        is CreatePortfolio -> createPortfolio(portfolio, command)
+        is BuyStocks -> buyStocks(portfolio, command)
     }
 
-private fun cratePortfolio(
+fun buyStocks(
+    portfolio: Portfolio,
+    command: BuyStocks,
+): Either<PortfolioError, NonEmptyList<PortfolioEvent>> = either {
+    if (!portfolio.isAvailable()) {
+        raise(PortfolioNotAvailable(command.portfolioId))
+    }
+    val requestedFundsForStocks = command.price * command.quantity
+    val availableFunds = portfolio.availableFunds()
+    if (availableFunds < requestedFundsForStocks) {
+        raise(PortfolioError.InsufficientFunds(portfolio.id, requestedFundsForStocks, availableFunds))
+    }
+    nonEmptyListOf(
+        PortfolioEvent.StocksPurchased(
+            command.portfolioId,
+            command.stock,
+            command.quantity,
+            command.price,
+        ),
+    )
+}
+
+private fun createPortfolio(
     portfolio: Portfolio,
     command: CreatePortfolio,
 ) = either {
-    if (!portfolio.initial) {
+    if (portfolio.isAvailable()) {
         raise(PortfolioError.PortfolioAlreadyExists(portfolio.id))
     }
     nonEmptyListOf(
