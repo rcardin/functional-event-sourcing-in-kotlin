@@ -34,6 +34,7 @@ fun Portfolio.availableFunds(): Money =
             is PortfolioEvent.PortfolioCreated -> event.money
             is PortfolioEvent.StocksPurchased -> acc - (event.price * event.quantity)
             is PortfolioEvent.StocksSold -> acc + (event.price * event.quantity)
+            is PortfolioEvent.PortfolioClosed -> Money(0.0)
         }
     }
 
@@ -43,8 +44,11 @@ fun Portfolio.ownedStocks(stock: Stock): Quantity =
             is PortfolioEvent.PortfolioCreated -> Quantity(0)
             is PortfolioEvent.StocksPurchased -> if (event.stock == stock) acc + event.quantity else acc
             is PortfolioEvent.StocksSold -> if (event.stock == stock) acc - event.quantity else acc
+            is PortfolioEvent.PortfolioClosed -> Quantity(0)
         }
     }
+
+fun Portfolio.isClosed(): Boolean = this.last() is PortfolioEvent.PortfolioClosed
 
 val notCreatedPortfolio: List<PortfolioEvent> = emptyList()
 
@@ -84,6 +88,8 @@ sealed interface PortfolioCommand {
             val quantity: Quantity,
             val price: Money,
         ) : PortfolioCommandWithPortfolioId
+
+        data class ClosePortfolio(override val portfolioId: PortfolioId) : PortfolioCommandWithPortfolioId
     }
 }
 
@@ -106,6 +112,8 @@ sealed interface PortfolioEvent {
         val quantity: Quantity,
         val price: Money,
     ) : PortfolioEvent
+
+    data class PortfolioClosed(override val portfolioId: PortfolioId) : PortfolioEvent
 }
 
 sealed interface PortfolioError {
@@ -125,4 +133,6 @@ sealed interface PortfolioError {
         val owned: Quantity,
     ) :
         PortfolioError
+
+    data class PortfolioIsClosed(override val portfolioId: PortfolioId) : PortfolioError
 }

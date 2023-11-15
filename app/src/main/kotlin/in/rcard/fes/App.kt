@@ -9,14 +9,22 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
+import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
 import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
+
+// class PortfolioDecider(
+//    decide: (PortfolioCommand, Portfolio) -> Either<PortfolioError, NonEmptyList<PortfolioEvent>>,
+//    evolve: (Portfolio, PortfolioEvent) -> Portfolio,
+//    initialState: Portfolio,
+// )
 
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
     when (command) {
         is CreatePortfolio -> createPortfolio(portfolio, command)
         is BuyStocks -> buyStocks(portfolio, command)
         is SellStocks -> sellStocks(portfolio, command)
+        is ClosePortfolio -> closePortfolio(portfolio, command)
     }
 
 private fun createPortfolio(
@@ -81,6 +89,13 @@ private fun sellStocks(
             command.price,
         ),
     )
+}
+
+fun closePortfolio(
+    portfolio: Portfolio,
+    command: ClosePortfolio
+): Either<PortfolioError, NonEmptyList<PortfolioEvent>> {
+    TODO("Not yet implemented")
 }
 
 fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio + event
