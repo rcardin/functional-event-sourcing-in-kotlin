@@ -3,11 +3,14 @@ package `in`.rcard.fes
 import arrow.core.nonEmptyListOf
 import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
+import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
 import `in`.rcard.fes.PortfolioError.InsufficientFunds
+import `in`.rcard.fes.PortfolioError.NotEnoughStocks
 import `in`.rcard.fes.PortfolioError.PortfolioAlreadyExists
 import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
 import `in`.rcard.fes.PortfolioEvent.PortfolioCreated
 import `in`.rcard.fes.PortfolioEvent.StocksPurchased
+import `in`.rcard.fes.PortfolioEvent.StocksSold
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.ShouldSpec
@@ -74,6 +77,69 @@ class PortfolioTest : ShouldSpec({
 
             decide(cmd, notCreatedPortfolio).shouldBeLeft(
                 PortfolioNotAvailable(PortfolioId("rcardin-1")),
+            )
+        }
+
+        should("sell stocks from the portfolio") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+                StocksPurchased(PortfolioId("rcardin-1"), Stock("AAPL"), Quantity(9), Money(10.0)),
+            )
+            val cmd = SellStocks(
+                PortfolioId("rcardin-1"),
+                Stock("AAPL"),
+                Quantity(8),
+                Money(12.0),
+            )
+
+            decide(cmd, state).shouldBeRight(
+                nonEmptyListOf(
+                    StocksSold(PortfolioId("rcardin-1"), Stock("AAPL"), Quantity(8), Money(12.0)),
+                ),
+            )
+        }
+
+        should("not sell stocks if the requested quantity is greater than the own quantity") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+                StocksPurchased(PortfolioId("rcardin-1"), Stock("AAPL"), Quantity(9), Money(10.0)),
+            )
+            val cmd = SellStocks(
+                PortfolioId("rcardin-1"),
+                Stock("AAPL"),
+                Quantity(10),
+                Money(12.0),
+            )
+
+            decide(cmd, state).shouldBeLeft(
+                NotEnoughStocks(
+                    PortfolioId("rcardin-1"),
+                    Stock("AAPL"),
+                    Quantity(10),
+                    Quantity(9),
+                ),
+            )
+        }
+
+        should("not sell stocks if the requested stocks are not owned by the portfolio") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+                StocksPurchased(PortfolioId("rcardin-1"), Stock("AAPL"), Quantity(9), Money(10.0)),
+            )
+            val cmd = SellStocks(
+                PortfolioId("rcardin-1"),
+                Stock("GOOG"),
+                Quantity(10),
+                Money(12.0),
+            )
+
+            decide(cmd, state).shouldBeLeft(
+                NotEnoughStocks(
+                    PortfolioId("rcardin-1"),
+                    Stock("GOOG"),
+                    Quantity(10),
+                    Quantity(0),
+                ),
             )
         }
     }

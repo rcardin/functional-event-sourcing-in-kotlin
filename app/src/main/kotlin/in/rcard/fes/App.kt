@@ -9,15 +9,33 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
+import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
 import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
 
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
     when (command) {
         is CreatePortfolio -> createPortfolio(portfolio, command)
         is BuyStocks -> buyStocks(portfolio, command)
+        is SellStocks -> sellStocks(portfolio, command)
     }
 
-fun buyStocks(
+private fun createPortfolio(
+    portfolio: Portfolio,
+    command: CreatePortfolio,
+) = either {
+    if (portfolio.isAvailable()) {
+        raise(PortfolioError.PortfolioAlreadyExists(portfolio.id))
+    }
+    nonEmptyListOf(
+        PortfolioEvent.PortfolioCreated(
+            PortfolioId("${command.userId}-1"),
+            command.userId,
+            command.amount,
+        ),
+    )
+}
+
+private fun buyStocks(
     portfolio: Portfolio,
     command: BuyStocks,
 ): Either<PortfolioError, NonEmptyList<PortfolioEvent>> = either {
@@ -39,18 +57,28 @@ fun buyStocks(
     )
 }
 
-private fun createPortfolio(
+private fun sellStocks(
     portfolio: Portfolio,
-    command: CreatePortfolio,
-) = either {
-    if (portfolio.isAvailable()) {
-        raise(PortfolioError.PortfolioAlreadyExists(portfolio.id))
+    command: SellStocks,
+): Either<PortfolioError, NonEmptyList<PortfolioEvent>> = either {
+    val ownedStocks = portfolio.ownedStocks(command.stock)
+    if (ownedStocks < command.quantity) {
+        raise(
+            PortfolioError.NotEnoughStocks(
+                portfolio.id,
+                command.stock,
+                command.quantity,
+                ownedStocks,
+            ),
+        )
     }
+
     nonEmptyListOf(
-        PortfolioEvent.PortfolioCreated(
-            PortfolioId("${command.userId}-1"),
-            command.userId,
-            command.amount,
+        PortfolioEvent.StocksSold(
+            command.portfolioId,
+            command.stock,
+            command.quantity,
+            command.price,
         ),
     )
 }

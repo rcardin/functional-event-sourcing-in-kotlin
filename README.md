@@ -11,7 +11,7 @@ The project try to implement the following user stories. The domain is a simplif
 
 - [x] A user should create a new portfolio.
 - [x] A user should buy stocks for an existing portfolio.
-- [ ] A user should sell stocks that it owns.
+- [x] A user should sell stocks that it owns.
 
 ## Event Storming / Domain Modeling
 
