@@ -3,6 +3,8 @@ package `in`.rcard.fes
 // Easiest implementation of the domain
 typealias Portfolio = List<PortfolioEvent>
 
+typealias Prices = Map<Stock, Money>
+
 @JvmInline
 value class PortfolioId(private val id: String)
 
@@ -48,6 +50,45 @@ fun Portfolio.ownedStocks(stock: Stock): Quantity =
         }
     }
 
+fun Portfolio.ownedStocks(): List<OwnedStock> =
+    this.fold(mapOf<Stock, OwnedStock>()) { acc, event ->
+        when (event) {
+            is PortfolioEvent.PortfolioCreated -> acc
+            is PortfolioEvent.StocksPurchased -> {
+                acc[event.stock]?.let {
+                    acc + (
+                        event.stock to OwnedStock(
+                            event.stock,
+                            it.quantity + event.quantity,
+                        )
+                        )
+                } ?: (
+                    acc + (
+                        event.stock to OwnedStock(
+                            event.stock,
+                            event.quantity,
+                        )
+                        )
+                    )
+            }
+
+            is PortfolioEvent.StocksSold -> {
+                acc[event.stock]?.let {
+                    acc + (
+                        event.stock to OwnedStock(
+                            event.stock,
+                            it.quantity - event.quantity,
+                        )
+                        )
+                } ?: acc
+            }
+
+            is PortfolioEvent.PortfolioClosed -> acc
+        }
+    }.values.toList()
+
+data class OwnedStock(val stock: Stock, val quantity: Quantity)
+
 fun Portfolio.isClosed(): Boolean = this.last() is PortfolioEvent.PortfolioClosed
 
 val notCreatedPortfolio: List<PortfolioEvent> = emptyList()
@@ -89,7 +130,8 @@ sealed interface PortfolioCommand {
             val price: Money,
         ) : PortfolioCommandWithPortfolioId
 
-        data class ClosePortfolio(override val portfolioId: PortfolioId) : PortfolioCommandWithPortfolioId
+        data class ClosePortfolio(override val portfolioId: PortfolioId, val prices: Prices) :
+            PortfolioCommandWithPortfolioId
     }
 }
 

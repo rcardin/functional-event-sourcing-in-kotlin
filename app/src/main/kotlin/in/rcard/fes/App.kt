@@ -7,11 +7,15 @@ import arrow.core.Either
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
+import arrow.core.toNonEmptyListOrNull
 import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
+import `in`.rcard.fes.PortfolioError.PortfolioIsClosed
 import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
+import `in`.rcard.fes.PortfolioEvent.PortfolioClosed
+import `in`.rcard.fes.PortfolioEvent.StocksSold
 
 // class PortfolioDecider(
 //    decide: (PortfolioCommand, Portfolio) -> Either<PortfolioError, NonEmptyList<PortfolioEvent>>,
@@ -82,7 +86,7 @@ private fun sellStocks(
     }
 
     nonEmptyListOf(
-        PortfolioEvent.StocksSold(
+        StocksSold(
             command.portfolioId,
             command.stock,
             command.quantity,
@@ -93,9 +97,24 @@ private fun sellStocks(
 
 fun closePortfolio(
     portfolio: Portfolio,
-    command: ClosePortfolio
-): Either<PortfolioError, NonEmptyList<PortfolioEvent>> {
-    TODO("Not yet implemented")
+    command: ClosePortfolio,
+): Either<PortfolioError, NonEmptyList<PortfolioEvent>> = either {
+    if (portfolio.isClosed()) {
+        raise(PortfolioIsClosed(command.portfolioId))
+    }
+    val stocksSoldEvents: List<StocksSold> = portfolio.ownedStocks().map {
+        StocksSold(
+            command.portfolioId,
+            it.stock,
+            it.quantity,
+            command.prices[it.stock] ?: Money(0.0),
+        )
+    }
+    (stocksSoldEvents + PortfolioClosed(command.portfolioId)).toNonEmptyListOrNull() ?: nonEmptyListOf(
+        PortfolioClosed(
+            command.portfolioId,
+        ),
+    )
 }
 
 fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio + event

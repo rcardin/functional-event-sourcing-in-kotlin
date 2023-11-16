@@ -3,11 +3,14 @@ package `in`.rcard.fes
 import arrow.core.nonEmptyListOf
 import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
+import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
 import `in`.rcard.fes.PortfolioError.InsufficientFunds
 import `in`.rcard.fes.PortfolioError.NotEnoughStocks
 import `in`.rcard.fes.PortfolioError.PortfolioAlreadyExists
+import `in`.rcard.fes.PortfolioError.PortfolioIsClosed
 import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
+import `in`.rcard.fes.PortfolioEvent.PortfolioClosed
 import `in`.rcard.fes.PortfolioEvent.PortfolioCreated
 import `in`.rcard.fes.PortfolioEvent.StocksPurchased
 import `in`.rcard.fes.PortfolioEvent.StocksSold
@@ -140,6 +143,64 @@ class PortfolioTest : ShouldSpec({
                     Quantity(10),
                     Quantity(0),
                 ),
+            )
+        }
+
+        should("close a portfolio, selling all the stocks") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+                StocksPurchased(PortfolioId("rcardin-1"), Stock("AAPL"), Quantity(9), Money(10.0)),
+            )
+            val cmd = ClosePortfolio(
+                PortfolioId("rcardin-1"),
+                mapOf(Stock("AAPL") to Money(5.0)),
+            )
+
+            decide(
+                cmd,
+                state,
+            ).shouldBeRight(
+                nonEmptyListOf(
+                    StocksSold(PortfolioId("rcardin-1"), Stock("AAPL"), Quantity(9), Money(5.0)),
+                    PortfolioClosed(PortfolioId("rcardin-1")),
+                ),
+            )
+        }
+
+        should("close an empty portfolio") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+            )
+            val cmd = ClosePortfolio(
+                PortfolioId("rcardin-1"),
+                mapOf(Stock("AAPL") to Money(5.0)),
+            )
+
+            decide(
+                cmd,
+                state,
+            ).shouldBeRight(
+                nonEmptyListOf(
+                    PortfolioClosed(PortfolioId("rcardin-1")),
+                ),
+            )
+        }
+
+        should("not close a portfolio already closed") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+                PortfolioClosed(PortfolioId("rcardin-1")),
+            )
+            val cmd = ClosePortfolio(
+                PortfolioId("rcardin-1"),
+                mapOf(Stock("AAPL") to Money(5.0)),
+            )
+
+            decide(
+                cmd,
+                state,
+            ).shouldBeLeft(
+                PortfolioIsClosed(PortfolioId("rcardin-1")),
             )
         }
     }
