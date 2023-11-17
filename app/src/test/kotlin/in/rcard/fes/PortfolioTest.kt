@@ -203,6 +203,24 @@ class PortfolioTest : ShouldSpec({
                 PortfolioIsClosed(PortfolioId("rcardin-1")),
             )
         }
+
+        should("not close a portfolio is the price of a stock is not available") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+                StocksPurchased(PortfolioId("rcardin-1"), Stock("AAPL"), Quantity(9), Money(10.0)),
+            )
+            val cmd = ClosePortfolio(
+                PortfolioId("rcardin-1"),
+                mapOf(Stock("GOOG") to Money(10.0)),
+            )
+
+            decide(
+                cmd,
+                state,
+            ).shouldBeLeft(
+                PortfolioError.PriceNotAvailable(PortfolioId("rcardin-1"), Stock("AAPL")),
+            )
+        }
     }
 
     context("The evolve function") {

@@ -177,4 +177,5 @@ sealed interface PortfolioError {
         PortfolioError
 
     data class PortfolioIsClosed(override val portfolioId: PortfolioId) : PortfolioError
+    data class PriceNotAvailable(override val portfolioId: PortfolioId, val stock: Stock) : PortfolioError
 }

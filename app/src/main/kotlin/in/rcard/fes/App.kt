@@ -14,6 +14,7 @@ import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePort
 import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
 import `in`.rcard.fes.PortfolioError.PortfolioIsClosed
 import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
+import `in`.rcard.fes.PortfolioError.PriceNotAvailable
 import `in`.rcard.fes.PortfolioEvent.PortfolioClosed
 import `in`.rcard.fes.PortfolioEvent.StocksSold
 
@@ -107,7 +108,9 @@ fun closePortfolio(
             command.portfolioId,
             it.stock,
             it.quantity,
-            command.prices[it.stock] ?: Money(0.0),
+            command.prices[it.stock] ?: raise(
+                PriceNotAvailable(command.portfolioId, it.stock),
+            ),
         )
     }
     (stocksSoldEvents + PortfolioClosed(command.portfolioId)).toNonEmptyListOrNull() ?: nonEmptyListOf(
