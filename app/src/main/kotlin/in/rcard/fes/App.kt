@@ -77,6 +77,9 @@ private fun sellStocks(
     portfolio: Portfolio,
     command: SellStocks,
 ): Either<PortfolioError, NonEmptyList<PortfolioEvent>> = either {
+    if (portfolio.isClosed()) {
+        raise(PortfolioIsClosed(command.portfolioId))
+    }
     val ownedStocks = portfolio.ownedStocks(command.stock)
     if (ownedStocks < command.quantity) {
         raise(

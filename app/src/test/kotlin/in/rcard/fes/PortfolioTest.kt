@@ -163,6 +163,24 @@ class PortfolioTest : ShouldSpec({
             )
         }
 
+        should("not sell stocks if the portfolio is closed") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+                StocksPurchased(PortfolioId("rcardin-1"), Stock("AAPL"), Quantity(9), Money(10.0)),
+                PortfolioClosed(PortfolioId("rcardin-1")),
+            )
+            val cmd = SellStocks(
+                PortfolioId("rcardin-1"),
+                Stock("AAPL"),
+                Quantity(8),
+                Money(12.0),
+            )
+
+            decide(cmd, state).shouldBeLeft(
+                PortfolioIsClosed(PortfolioId("rcardin-1")),
+            )
+        }
+
         should("close a portfolio, selling all the stocks") {
             val state = nonEmptyListOf(
                 PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
