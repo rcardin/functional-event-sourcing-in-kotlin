@@ -110,6 +110,7 @@ value class Quantity(val amount: Int) {
     }
 }
 
+// TODO Add validations on the command
 sealed interface PortfolioCommand {
     data class CreatePortfolio(val userId: UserId, val amount: Money) : PortfolioCommand
 
@@ -137,12 +138,19 @@ sealed interface PortfolioCommand {
 
 sealed interface PortfolioEvent {
     val portfolioId: PortfolioId
+    val occurredOn: Long
 
-    data class PortfolioCreated(override val portfolioId: PortfolioId, val userId: UserId, val money: Money) :
+    data class PortfolioCreated(
+        override val portfolioId: PortfolioId,
+        override val occurredOn: Long,
+        val userId: UserId,
+        val money: Money,
+    ) :
         PortfolioEvent
 
     data class StocksPurchased(
         override val portfolioId: PortfolioId,
+        override val occurredOn: Long,
         val stock: Stock,
         val quantity: Quantity,
         val price: Money,
@@ -150,12 +158,13 @@ sealed interface PortfolioEvent {
 
     data class StocksSold(
         override val portfolioId: PortfolioId,
+        override val occurredOn: Long,
         val stock: Stock,
         val quantity: Quantity,
         val price: Money,
     ) : PortfolioEvent
 
-    data class PortfolioClosed(override val portfolioId: PortfolioId) : PortfolioEvent
+    data class PortfolioClosed(override val portfolioId: PortfolioId, override val occurredOn: Long) : PortfolioEvent
 }
 
 sealed interface PortfolioError {

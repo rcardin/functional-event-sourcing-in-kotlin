@@ -17,6 +17,7 @@ import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
 import `in`.rcard.fes.PortfolioError.PriceNotAvailable
 import `in`.rcard.fes.PortfolioEvent.PortfolioClosed
 import `in`.rcard.fes.PortfolioEvent.StocksSold
+import java.time.Clock
 
 // class PortfolioDecider(
 //    decide: (PortfolioCommand, Portfolio) -> Either<PortfolioError, NonEmptyList<PortfolioEvent>>,
@@ -24,6 +25,7 @@ import `in`.rcard.fes.PortfolioEvent.StocksSold
 //    initialState: Portfolio,
 // )
 
+context (Clock)
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
     when (command) {
         is CreatePortfolio -> createPortfolio(portfolio, command)
@@ -32,6 +34,7 @@ fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioErr
         is ClosePortfolio -> closePortfolio(portfolio, command)
     }
 
+context (Clock)
 private fun createPortfolio(
     portfolio: Portfolio,
     command: CreatePortfolio,
@@ -42,12 +45,14 @@ private fun createPortfolio(
     nonEmptyListOf(
         PortfolioEvent.PortfolioCreated(
             PortfolioId("${command.userId}-1"),
+            this@Clock.millis(),
             command.userId,
             command.amount,
         ),
     )
 }
 
+context (Clock)
 private fun buyStocks(
     portfolio: Portfolio,
     command: BuyStocks,
@@ -66,6 +71,7 @@ private fun buyStocks(
     nonEmptyListOf(
         PortfolioEvent.StocksPurchased(
             command.portfolioId,
+            this@Clock.millis(),
             command.stock,
             command.quantity,
             command.price,
@@ -73,6 +79,7 @@ private fun buyStocks(
     )
 }
 
+context (Clock)
 private fun sellStocks(
     portfolio: Portfolio,
     command: SellStocks,
@@ -95,6 +102,7 @@ private fun sellStocks(
     nonEmptyListOf(
         StocksSold(
             command.portfolioId,
+            this@Clock.millis(),
             command.stock,
             command.quantity,
             command.price,
@@ -102,6 +110,7 @@ private fun sellStocks(
     )
 }
 
+context (Clock)
 fun closePortfolio(
     portfolio: Portfolio,
     command: ClosePortfolio,
@@ -112,6 +121,7 @@ fun closePortfolio(
     val stocksSoldEvents: List<StocksSold> = portfolio.ownedStocks().map {
         StocksSold(
             command.portfolioId,
+            this@Clock.millis(),
             it.stock,
             it.quantity,
             command.prices[it.stock] ?: raise(
@@ -119,11 +129,13 @@ fun closePortfolio(
             ),
         )
     }
-    (stocksSoldEvents + PortfolioClosed(command.portfolioId)).toNonEmptyListOrNull() ?: nonEmptyListOf(
-        PortfolioClosed(
-            command.portfolioId,
-        ),
-    )
+    (stocksSoldEvents + PortfolioClosed(command.portfolioId, this@Clock.millis())).toNonEmptyListOrNull()
+        ?: nonEmptyListOf(
+            PortfolioClosed(
+                command.portfolioId,
+                this@Clock.millis(),
+            ),
+        )
 }
 
 fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio + event
