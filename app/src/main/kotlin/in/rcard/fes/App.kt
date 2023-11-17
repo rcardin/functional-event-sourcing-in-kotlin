@@ -55,6 +55,9 @@ private fun buyStocks(
     if (!portfolio.isAvailable()) {
         raise(PortfolioNotAvailable(command.portfolioId))
     }
+    if (portfolio.isClosed()) {
+        raise(PortfolioIsClosed(command.portfolioId))
+    }
     val requestedFundsForStocks = command.price * command.quantity
     val availableFunds = portfolio.availableFunds()
     if (availableFunds < requestedFundsForStocks) {

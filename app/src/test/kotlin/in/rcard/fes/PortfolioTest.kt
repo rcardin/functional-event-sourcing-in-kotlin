@@ -70,7 +70,7 @@ class PortfolioTest : ShouldSpec({
             )
         }
 
-        should("should not buy stocks for a non-existing portfolio") {
+        should("not buy stocks for a non-existing portfolio") {
             val cmd = BuyStocks(
                 PortfolioId("rcardin-1"),
                 Stock("AAPL"),
@@ -80,6 +80,23 @@ class PortfolioTest : ShouldSpec({
 
             decide(cmd, notCreatedPortfolio).shouldBeLeft(
                 PortfolioNotAvailable(PortfolioId("rcardin-1")),
+            )
+        }
+
+        should("not buy stocks if the portfolio is closed") {
+            val state = nonEmptyListOf(
+                PortfolioCreated(PortfolioId("rcardin-1"), UserId("rcardin"), Money(100.0)),
+                PortfolioClosed(PortfolioId("rcardin-1")),
+            )
+            val cmd = BuyStocks(
+                PortfolioId("rcardin-1"),
+                Stock("AAPL"),
+                Quantity(11),
+                Money(10.0),
+            )
+
+            decide(cmd, state).shouldBeLeft(
+                PortfolioIsClosed(PortfolioId("rcardin-1")),
             )
         }
 
