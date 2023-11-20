@@ -8,15 +8,25 @@ import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import arrow.core.toNonEmptyListOrNull
-import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
-import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
-import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
-import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
-import `in`.rcard.fes.PortfolioError.PortfolioIsClosed
-import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
-import `in`.rcard.fes.PortfolioError.PriceNotAvailable
-import `in`.rcard.fes.PortfolioEvent.PortfolioClosed
-import `in`.rcard.fes.PortfolioEvent.StocksSold
+import `in`.rcard.fes.portfolio.Portfolio
+import `in`.rcard.fes.portfolio.PortfolioCommand
+import `in`.rcard.fes.portfolio.PortfolioCommand.CreatePortfolio
+import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
+import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
+import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
+import `in`.rcard.fes.portfolio.PortfolioError
+import `in`.rcard.fes.portfolio.PortfolioError.PortfolioIsClosed
+import `in`.rcard.fes.portfolio.PortfolioError.PortfolioNotAvailable
+import `in`.rcard.fes.portfolio.PortfolioError.PriceNotAvailable
+import `in`.rcard.fes.portfolio.PortfolioEvent
+import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioClosed
+import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
+import `in`.rcard.fes.portfolio.PortfolioId
+import `in`.rcard.fes.portfolio.availableFunds
+import `in`.rcard.fes.portfolio.id
+import `in`.rcard.fes.portfolio.isAvailable
+import `in`.rcard.fes.portfolio.isClosed
+import `in`.rcard.fes.portfolio.ownedStocks
 import java.time.Clock
 
 // class PortfolioDecider(

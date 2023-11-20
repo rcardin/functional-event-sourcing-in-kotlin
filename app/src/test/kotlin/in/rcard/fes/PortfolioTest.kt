@@ -1,19 +1,26 @@
 package `in`.rcard.fes
 
 import arrow.core.nonEmptyListOf
-import `in`.rcard.fes.PortfolioCommand.CreatePortfolio
-import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
-import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
-import `in`.rcard.fes.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
-import `in`.rcard.fes.PortfolioError.InsufficientFunds
-import `in`.rcard.fes.PortfolioError.NotEnoughStocks
-import `in`.rcard.fes.PortfolioError.PortfolioAlreadyExists
-import `in`.rcard.fes.PortfolioError.PortfolioIsClosed
-import `in`.rcard.fes.PortfolioError.PortfolioNotAvailable
-import `in`.rcard.fes.PortfolioEvent.PortfolioClosed
-import `in`.rcard.fes.PortfolioEvent.PortfolioCreated
-import `in`.rcard.fes.PortfolioEvent.StocksPurchased
-import `in`.rcard.fes.PortfolioEvent.StocksSold
+import `in`.rcard.fes.portfolio.Money
+import `in`.rcard.fes.portfolio.PortfolioCommand.CreatePortfolio
+import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
+import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
+import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
+import `in`.rcard.fes.portfolio.PortfolioError
+import `in`.rcard.fes.portfolio.PortfolioError.InsufficientFunds
+import `in`.rcard.fes.portfolio.PortfolioError.NotEnoughStocks
+import `in`.rcard.fes.portfolio.PortfolioError.PortfolioAlreadyExists
+import `in`.rcard.fes.portfolio.PortfolioError.PortfolioIsClosed
+import `in`.rcard.fes.portfolio.PortfolioError.PortfolioNotAvailable
+import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioClosed
+import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
+import `in`.rcard.fes.portfolio.PortfolioEvent.StocksPurchased
+import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
+import `in`.rcard.fes.portfolio.PortfolioId
+import `in`.rcard.fes.portfolio.Quantity
+import `in`.rcard.fes.portfolio.Stock
+import `in`.rcard.fes.portfolio.UserId
+import `in`.rcard.fes.portfolio.notCreatedPortfolio
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.ShouldSpec
@@ -22,9 +29,9 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 
-val NOW: Instant = Instant.now()
-val NOW_MILLIS: Long = NOW.toEpochMilli()
-val FIXED_CLOCK: Clock = Clock.fixed(NOW, ZoneId.of("UTC"))
+private val NOW: Instant = Instant.now()
+private val NOW_MILLIS: Long = NOW.toEpochMilli()
+private val FIXED_CLOCK: Clock = Clock.fixed(NOW, ZoneId.of("UTC"))
 
 class PortfolioTest : ShouldSpec({
     context("The decider function") {

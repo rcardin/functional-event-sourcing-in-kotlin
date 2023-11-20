@@ -1,4 +1,4 @@
-package `in`.rcard.fes
+package `in`.rcard.fes.portfolio
 
 // Easiest implementation of the domain
 typealias Portfolio = List<PortfolioEvent>
@@ -108,83 +108,4 @@ value class Quantity(val amount: Int) {
             else -> 0
         }
     }
-}
-
-// TODO Add validations on the command
-sealed interface PortfolioCommand {
-    data class CreatePortfolio(val userId: UserId, val amount: Money) : PortfolioCommand
-
-    sealed interface PortfolioCommandWithPortfolioId : PortfolioCommand {
-        val portfolioId: PortfolioId
-
-        data class BuyStocks(
-            override val portfolioId: PortfolioId,
-            val stock: Stock,
-            val quantity: Quantity,
-            val price: Money,
-        ) : PortfolioCommandWithPortfolioId
-
-        data class SellStocks(
-            override val portfolioId: PortfolioId,
-            val stock: Stock,
-            val quantity: Quantity,
-            val price: Money,
-        ) : PortfolioCommandWithPortfolioId
-
-        data class ClosePortfolio(override val portfolioId: PortfolioId, val prices: Prices) :
-            PortfolioCommandWithPortfolioId
-    }
-}
-
-sealed interface PortfolioEvent {
-    val portfolioId: PortfolioId
-    val occurredOn: Long
-
-    data class PortfolioCreated(
-        override val portfolioId: PortfolioId,
-        override val occurredOn: Long,
-        val userId: UserId,
-        val money: Money,
-    ) :
-        PortfolioEvent
-
-    data class StocksPurchased(
-        override val portfolioId: PortfolioId,
-        override val occurredOn: Long,
-        val stock: Stock,
-        val quantity: Quantity,
-        val price: Money,
-    ) : PortfolioEvent
-
-    data class StocksSold(
-        override val portfolioId: PortfolioId,
-        override val occurredOn: Long,
-        val stock: Stock,
-        val quantity: Quantity,
-        val price: Money,
-    ) : PortfolioEvent
-
-    data class PortfolioClosed(override val portfolioId: PortfolioId, override val occurredOn: Long) : PortfolioEvent
-}
-
-sealed interface PortfolioError {
-    val portfolioId: PortfolioId
-
-    data class PortfolioAlreadyExists(override val portfolioId: PortfolioId) : PortfolioError
-
-    data class PortfolioNotAvailable(override val portfolioId: PortfolioId) : PortfolioError
-
-    data class InsufficientFunds(override val portfolioId: PortfolioId, val requested: Money, val owned: Money) :
-        PortfolioError
-
-    data class NotEnoughStocks(
-        override val portfolioId: PortfolioId,
-        val stock: Stock,
-        val requested: Quantity,
-        val owned: Quantity,
-    ) :
-        PortfolioError
-
-    data class PortfolioIsClosed(override val portfolioId: PortfolioId) : PortfolioError
-    data class PriceNotAvailable(override val portfolioId: PortfolioId, val stock: Stock) : PortfolioError
 }
