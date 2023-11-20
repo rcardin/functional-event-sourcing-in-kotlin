@@ -30,12 +30,31 @@ import `in`.rcard.fes.portfolio.ownedStocks
 import java.time.Clock
 
 // class PortfolioDecider(
-//    decide: (PortfolioCommand, Portfolio) -> Either<PortfolioError, NonEmptyList<PortfolioEvent>>,
+//    decide: Clock.(PortfolioCommand, Portfolio) -> Either<PortfolioError, NonEmptyList<PortfolioEvent>>,
 //    evolve: (Portfolio, PortfolioEvent) -> Portfolio,
 //    initialState: Portfolio,
+//    isTerminal: (Portfolio) -> Boolean,
 // )
 
-context (Clock)
+context (Clock, PortfolioEventStore)
+fun handle(command: PortfolioCommand): Either<PortfolioError, Unit> = either {
+    when (command) {
+        is PortfolioCommand.PortfolioCommandWithPortfolioId -> {
+            val (eTag, portfolio) = loadState(command.portfolioId)
+            val events = decide(command, portfolio).bind()
+            val newPortfolio = events.fold(portfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
+            if (!saveState(command.portfolioId, eTag, newPortfolio)) {
+                handle(command)
+            }
+        }
+
+        else -> {
+            TODO()
+        }
+    }
+}
+
+context(Clock)
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
     when (command) {
         is CreatePortfolio -> createPortfolio(portfolio, command)
@@ -44,7 +63,7 @@ fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioErr
         is ClosePortfolio -> closePortfolio(portfolio, command)
     }
 
-context (Clock)
+context(Clock)
 private fun createPortfolio(
     portfolio: Portfolio,
     command: CreatePortfolio,
@@ -62,7 +81,7 @@ private fun createPortfolio(
     )
 }
 
-context (Clock)
+context(Clock)
 private fun buyStocks(
     portfolio: Portfolio,
     command: BuyStocks,
@@ -89,7 +108,7 @@ private fun buyStocks(
     )
 }
 
-context (Clock)
+context(Clock)
 private fun sellStocks(
     portfolio: Portfolio,
     command: SellStocks,
@@ -120,7 +139,7 @@ private fun sellStocks(
     )
 }
 
-context (Clock)
+context(Clock)
 fun closePortfolio(
     portfolio: Portfolio,
     command: ClosePortfolio,
@@ -149,6 +168,13 @@ fun closePortfolio(
 }
 
 fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio + event
+
+typealias ETag = String
+
+class PortfolioEventStore {
+    fun loadState(portfolioId: PortfolioId): Pair<ETag, Portfolio> = TODO()
+    fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Boolean = TODO() // Modify
+}
 
 fun main() {
     println("Hello World!")
