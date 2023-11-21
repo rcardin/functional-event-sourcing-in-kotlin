@@ -170,14 +170,22 @@ fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio +
 
 typealias ETag = String
 
-class PortfolioEventStore {
-    fun loadState(portfolioId: PortfolioId): Pair<ETag, Portfolio> = TODO()
-    fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Boolean = TODO() // Modify
+typealias LoadedPortfolio = Pair<ETag, Portfolio>
 
-    fun saveState(portfolioId: PortfolioId, portfolio: Portfolio): Boolean = TODO() // Modify
+class PortfolioEventStore {
+
+    fun loadState(portfolioId: PortfolioId): LoadedPortfolio =
+        TODO() // Either<EventStoreError, LoadedPortfolio>
+
+    fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Boolean =
+        TODO() // Either<EventStoreError, Unit>
+
+    fun saveState(portfolioId: PortfolioId, portfolio: Portfolio): Boolean =
+        TODO() // Either<EventStoreError, Unit>
 
     sealed interface EventStoreError {
         data class StateLoadingError(val portfolioId: PortfolioId) : EventStoreError
+        data class ConcurrentModificationError(val portfolioId: PortfolioId) : EventStoreError
         data class StateSavingError(val portfolioId: PortfolioId) : EventStoreError
     }
 }
