@@ -34,12 +34,17 @@ class PortfolioHandleCommandTest : ShouldSpec({
                     ),
                 )
             } returns true
+            val decider = mockk<PortfolioDecider>()
             with(FIXED_CLOCK) {
-                with(eventStore) {
-                    val actualResult = handle(CreatePortfolio(UserId("rcardin"), Money(100.0)))
-                    actualResult.shouldBeRight(PortfolioId("rcardin-1"))
+                with(decider) {
+                    with(eventStore) {
+                        val actualResult = handle(CreatePortfolio(UserId("rcardin"), Money(100.0)))
+                        actualResult.shouldBeRight(PortfolioId("rcardin-1"))
+                    }
                 }
             }
+        }
+        should("not be created if the decide function fails") {
         }
         should("be closed") {
             // TODO

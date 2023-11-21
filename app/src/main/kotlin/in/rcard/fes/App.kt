@@ -30,7 +30,7 @@ import `in`.rcard.fes.portfolio.notCreatedPortfolio
 import `in`.rcard.fes.portfolio.ownedStocks
 import java.time.Clock
 
-context (Clock, PortfolioEventStore)
+context (Clock, PortfolioDecider, PortfolioEventStore)
 fun handle(command: PortfolioCommand): Either<PortfolioError, PortfolioId> = either {
     when (command) {
         is PortfolioCommand.PortfolioCommandWithPortfolioId -> {
@@ -44,13 +44,20 @@ fun handle(command: PortfolioCommand): Either<PortfolioError, PortfolioId> = eit
         }
 
         else -> {
-            val events = decide(command, notCreatedPortfolio).bind()
+            val events = decide(command, initialState).bind()
             val newPortfolio =
                 events.fold(notCreatedPortfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
             saveState(newPortfolio.id, newPortfolio)
             newPortfolio.id
         }
     }
+}
+
+interface PortfolioDecider {
+    val decide: (PortfolioCommand, Portfolio) -> Either<PortfolioError, NonEmptyList<PortfolioEvent>>
+    val evolve: (Portfolio, PortfolioEvent) -> Portfolio
+    val initialState: Portfolio
+    val isTerminal: (Portfolio) -> Boolean // ???
 }
 
 context(Clock)
