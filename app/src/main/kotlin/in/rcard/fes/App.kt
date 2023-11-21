@@ -26,18 +26,12 @@ import `in`.rcard.fes.portfolio.availableFunds
 import `in`.rcard.fes.portfolio.id
 import `in`.rcard.fes.portfolio.isAvailable
 import `in`.rcard.fes.portfolio.isClosed
+import `in`.rcard.fes.portfolio.notCreatedPortfolio
 import `in`.rcard.fes.portfolio.ownedStocks
 import java.time.Clock
 
-// class PortfolioDecider(
-//    decide: Clock.(PortfolioCommand, Portfolio) -> Either<PortfolioError, NonEmptyList<PortfolioEvent>>,
-//    evolve: (Portfolio, PortfolioEvent) -> Portfolio,
-//    initialState: Portfolio,
-//    isTerminal: (Portfolio) -> Boolean,
-// )
-
 context (Clock, PortfolioEventStore)
-fun handle(command: PortfolioCommand): Either<PortfolioError, Unit> = either {
+fun handle(command: PortfolioCommand): Either<PortfolioError, PortfolioId> = either {
     when (command) {
         is PortfolioCommand.PortfolioCommandWithPortfolioId -> {
             val (eTag, portfolio) = loadState(command.portfolioId)
@@ -46,10 +40,15 @@ fun handle(command: PortfolioCommand): Either<PortfolioError, Unit> = either {
             if (!saveState(command.portfolioId, eTag, newPortfolio)) {
                 handle(command)
             }
+            command.portfolioId
         }
 
         else -> {
-            TODO()
+            val events = decide(command, notCreatedPortfolio).bind()
+            val newPortfolio =
+                events.fold(notCreatedPortfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
+            saveState(newPortfolio.id, newPortfolio)
+            newPortfolio.id
         }
     }
 }
@@ -174,6 +173,13 @@ typealias ETag = String
 class PortfolioEventStore {
     fun loadState(portfolioId: PortfolioId): Pair<ETag, Portfolio> = TODO()
     fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Boolean = TODO() // Modify
+
+    fun saveState(portfolioId: PortfolioId, portfolio: Portfolio): Boolean = TODO() // Modify
+
+    sealed interface EventStoreError {
+        data class StateLoadingError(val portfolioId: PortfolioId) : EventStoreError
+        data class StateSavingError(val portfolioId: PortfolioId) : EventStoreError
+    }
 }
 
 fun main() {
