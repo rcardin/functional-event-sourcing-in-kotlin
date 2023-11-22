@@ -6,6 +6,7 @@ import `in`.rcard.fes.portfolio.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.UserId
+import `in`.rcard.fes.portfolio.notCreatedPortfolio
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.every
@@ -21,12 +22,14 @@ class PortfolioHandleCommandTest : ShouldSpec({
     context("a portfolio") {
         should("be created") {
             val eventStore = mockk<PortfolioEventStore>()
+            every { eventStore.loadState(PortfolioId("1")) } returns ("0" to notCreatedPortfolio)
             every {
                 eventStore.saveState(
-                    PortfolioId("rcardin-1"),
+                    PortfolioId("1"),
+                    "0",
                     nonEmptyListOf(
                         PortfolioCreated(
-                            PortfolioId("rcardin-1"),
+                            PortfolioId("1"),
                             NOW.toEpochMilli(),
                             UserId("rcardin"),
                             Money(100.0),

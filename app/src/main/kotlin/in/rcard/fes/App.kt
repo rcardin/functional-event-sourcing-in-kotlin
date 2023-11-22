@@ -30,29 +30,15 @@ import `in`.rcard.fes.portfolio.ownedStocks
 import java.time.Clock
 
 context (Clock, PortfolioEventStore)
-fun handle(command: PortfolioCommand): Either<PortfolioError, PortfolioId> = TODO()
-// either {
-//    when (command) {
-//        is PortfolioCommand.PortfolioCommandWithPortfolioId -> {
-//            val (eTag, portfolio) = loadState(command.portfolioId)
-//            val events = decide(command, portfolio).bind()
-//            val newPortfolio = events.fold(portfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
-//            if (!saveState(command.portfolioId, eTag, newPortfolio)) {
-//                handle(command)
-//            }
-//            command.portfolioId
-//        }
-//
-//        else -> {
-//            val (eTag, portfolioEvents) = loadState(newPortfolio.id)
-//            val events = decide(command, notCreatedPortfolio).bind()
-//            val newPortfolio =
-//                events.fold(notCreatedPortfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
-//            saveState(newPortfolio.id, newPortfolio)
-//            newPortfolio.id
-//        }
-//    }
-// }
+fun handle(command: PortfolioCommand): Either<PortfolioError, PortfolioId> = either {
+    val (eTag, portfolio) = loadState(command.portfolioId)
+    val events = decide(command, portfolio).bind()
+    val newPortfolio = events.fold(portfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
+    if (!saveState(command.portfolioId, eTag, newPortfolio)) {
+        handle(command)
+    }
+    command.portfolioId
+}
 
 context(Clock)
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
@@ -179,9 +165,6 @@ class PortfolioEventStore {
         TODO() // Either<EventStoreError, LoadedPortfolio>
 
     fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Boolean =
-        TODO() // Either<EventStoreError, Unit>
-
-    fun saveState(portfolioId: PortfolioId, portfolio: Portfolio): Boolean =
         TODO() // Either<EventStoreError, Unit>
 
     sealed interface EventStoreError {
