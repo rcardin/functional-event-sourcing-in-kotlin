@@ -7,7 +7,10 @@ import arrow.core.Either
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
+import arrow.core.raise.withError
 import arrow.core.toNonEmptyListOrNull
+import `in`.rcard.fes.PortfolioEventStore.EventStoreError
+import `in`.rcard.fes.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.Portfolio
 import `in`.rcard.fes.portfolio.PortfolioCommand
 import `in`.rcard.fes.portfolio.PortfolioCommand.BuyStocks
@@ -30,14 +33,26 @@ import `in`.rcard.fes.portfolio.ownedStocks
 import java.time.Clock
 
 context (Clock, PortfolioEventStore)
-fun handle(command: PortfolioCommand): Either<PortfolioError, PortfolioId> = either {
-    val (eTag, portfolio) = loadState(command.portfolioId)
-    val events = decide(command, portfolio).bind()
+suspend fun handle(command: PortfolioCommand): Either<Union<EventStoreError, PortfolioError>, PortfolioId> = either {
+    val (eTag, portfolio) = withError({ Union.First(it) }) { loadState(command.portfolioId).bind() }
+    val events = withError({ Union.Second(it) }) { decide(command, portfolio).bind() }
     val newPortfolio = events.fold(portfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
-    if (!saveState(command.portfolioId, eTag, newPortfolio)) {
-        handle(command)
-    }
-    command.portfolioId
+    saveState(command.portfolioId, eTag, newPortfolio).fold(
+        {
+            when (it) {
+                is ConcurrentModificationError -> handle(command).bind()
+                else -> raise(Union.First(it))
+            }
+        },
+        { command.portfolioId },
+    )
+}
+
+// https://kotlinlang.slack.com/archives/C5UPMM0A0/p1690285846689249?thread_ts=1690281738.955939&cid=C5UPMM0A0
+// Thanks to Simon Vergauwen for the Union type
+sealed interface Union<out A, out B> {
+    data class First<A>(val value: A) : Union<A, Nothing>
+    data class Second<B>(val value: B) : Union<Nothing, B>
 }
 
 context(Clock)
@@ -161,11 +176,10 @@ typealias LoadedPortfolio = Pair<ETag, Portfolio>
 
 class PortfolioEventStore {
 
-    fun loadState(portfolioId: PortfolioId): LoadedPortfolio =
-        TODO() // Either<EventStoreError, LoadedPortfolio>
+    suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio> = TODO()
 
-    fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Boolean =
-        TODO() // Either<EventStoreError, Unit>
+    suspend fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Either<EventStoreError, Unit> =
+        TODO()
 
     sealed interface EventStoreError {
         data class StateLoadingError(val portfolioId: PortfolioId) : EventStoreError
