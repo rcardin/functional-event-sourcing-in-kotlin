@@ -10,10 +10,10 @@ import arrow.core.raise.either
 import arrow.core.toNonEmptyListOrNull
 import `in`.rcard.fes.portfolio.Portfolio
 import `in`.rcard.fes.portfolio.PortfolioCommand
+import `in`.rcard.fes.portfolio.PortfolioCommand.BuyStocks
+import `in`.rcard.fes.portfolio.PortfolioCommand.ClosePortfolio
 import `in`.rcard.fes.portfolio.PortfolioCommand.CreatePortfolio
-import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
-import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
-import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
+import `in`.rcard.fes.portfolio.PortfolioCommand.SellStocks
 import `in`.rcard.fes.portfolio.PortfolioError
 import `in`.rcard.fes.portfolio.PortfolioError.PortfolioIsClosed
 import `in`.rcard.fes.portfolio.PortfolioError.PortfolioNotAvailable
@@ -26,32 +26,33 @@ import `in`.rcard.fes.portfolio.availableFunds
 import `in`.rcard.fes.portfolio.id
 import `in`.rcard.fes.portfolio.isAvailable
 import `in`.rcard.fes.portfolio.isClosed
-import `in`.rcard.fes.portfolio.notCreatedPortfolio
 import `in`.rcard.fes.portfolio.ownedStocks
 import java.time.Clock
 
 context (Clock, PortfolioEventStore)
-fun handle(command: PortfolioCommand): Either<PortfolioError, PortfolioId> = either {
-    when (command) {
-        is PortfolioCommand.PortfolioCommandWithPortfolioId -> {
-            val (eTag, portfolio) = loadState(command.portfolioId)
-            val events = decide(command, portfolio).bind()
-            val newPortfolio = events.fold(portfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
-            if (!saveState(command.portfolioId, eTag, newPortfolio)) {
-                handle(command)
-            }
-            command.portfolioId
-        }
-
-        else -> {
-            val events = decide(command, notCreatedPortfolio).bind()
-            val newPortfolio =
-                events.fold(notCreatedPortfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
-            saveState(newPortfolio.id, newPortfolio)
-            newPortfolio.id
-        }
-    }
-}
+fun handle(command: PortfolioCommand): Either<PortfolioError, PortfolioId> = TODO()
+// either {
+//    when (command) {
+//        is PortfolioCommand.PortfolioCommandWithPortfolioId -> {
+//            val (eTag, portfolio) = loadState(command.portfolioId)
+//            val events = decide(command, portfolio).bind()
+//            val newPortfolio = events.fold(portfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
+//            if (!saveState(command.portfolioId, eTag, newPortfolio)) {
+//                handle(command)
+//            }
+//            command.portfolioId
+//        }
+//
+//        else -> {
+//            val (eTag, portfolioEvents) = loadState(newPortfolio.id)
+//            val events = decide(command, notCreatedPortfolio).bind()
+//            val newPortfolio =
+//                events.fold(notCreatedPortfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
+//            saveState(newPortfolio.id, newPortfolio)
+//            newPortfolio.id
+//        }
+//    }
+// }
 
 context(Clock)
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
@@ -72,7 +73,7 @@ private fun createPortfolio(
     }
     nonEmptyListOf(
         PortfolioEvent.PortfolioCreated(
-            PortfolioId("${command.userId}-1"),
+            command.portfolioId,
             this@Clock.millis(),
             command.userId,
             command.amount,

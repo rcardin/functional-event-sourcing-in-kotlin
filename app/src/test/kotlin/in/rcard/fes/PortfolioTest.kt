@@ -2,10 +2,10 @@ package `in`.rcard.fes
 
 import arrow.core.nonEmptyListOf
 import `in`.rcard.fes.portfolio.Money
+import `in`.rcard.fes.portfolio.PortfolioCommand.BuyStocks
+import `in`.rcard.fes.portfolio.PortfolioCommand.ClosePortfolio
 import `in`.rcard.fes.portfolio.PortfolioCommand.CreatePortfolio
-import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.BuyStocks
-import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.ClosePortfolio
-import `in`.rcard.fes.portfolio.PortfolioCommand.PortfolioCommandWithPortfolioId.SellStocks
+import `in`.rcard.fes.portfolio.PortfolioCommand.SellStocks
 import `in`.rcard.fes.portfolio.PortfolioError
 import `in`.rcard.fes.portfolio.PortfolioError.InsufficientFunds
 import `in`.rcard.fes.portfolio.PortfolioError.NotEnoughStocks
@@ -36,12 +36,12 @@ private val FIXED_CLOCK: Clock = Clock.fixed(NOW, ZoneId.of("UTC"))
 class PortfolioTest : ShouldSpec({
     context("The decider function") {
         should("create a portfolio for a new user") {
-            val cmd = CreatePortfolio(UserId("rcardin"), Money(100.0))
+            val cmd = CreatePortfolio(PortfolioId("1"), UserId("rcardin"), Money(100.0))
             with(FIXED_CLOCK) {
                 decide(cmd, notCreatedPortfolio).shouldBeRight(
                     nonEmptyListOf(
                         PortfolioCreated(
-                            PortfolioId("rcardin-1"),
+                            PortfolioId("1"),
                             NOW_MILLIS,
                             UserId("rcardin"),
                             Money(100.0),
@@ -52,12 +52,12 @@ class PortfolioTest : ShouldSpec({
         }
 
         should("not create a portfolio if the user already owns one") {
-            val cmd = CreatePortfolio(UserId("rcardin"), Money(100.0))
+            val cmd = CreatePortfolio(PortfolioId("1"), UserId("rcardin"), Money(100.0))
             val state =
-                nonEmptyListOf(PortfolioCreated(PortfolioId("rcardin-1"), NOW_MILLIS, UserId("rcardin"), Money(100.0)))
+                nonEmptyListOf(PortfolioCreated(PortfolioId("1"), NOW_MILLIS, UserId("rcardin"), Money(100.0)))
             with(FIXED_CLOCK) {
                 decide(cmd, state).shouldBeLeft(
-                    PortfolioAlreadyExists(PortfolioId("rcardin-1")),
+                    PortfolioAlreadyExists(PortfolioId("1")),
                 )
             }
         }

@@ -36,8 +36,8 @@ class PortfolioHandleCommandTest : ShouldSpec({
             } returns true
             with(FIXED_CLOCK) {
                 with(eventStore) {
-                    val actualResult = handle(CreatePortfolio(UserId("rcardin"), Money(100.0)))
-                    actualResult.shouldBeRight(PortfolioId("rcardin-1"))
+                    val actualResult = handle(CreatePortfolio(PortfolioId("1"), UserId("rcardin"), Money(100.0)))
+                    actualResult.shouldBeRight(PortfolioId("1"))
                 }
             }
         }
