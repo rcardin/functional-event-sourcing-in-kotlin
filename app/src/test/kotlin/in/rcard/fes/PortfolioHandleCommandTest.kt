@@ -3,10 +3,12 @@ package `in`.rcard.fes
 import arrow.core.nonEmptyListOf
 import `in`.rcard.fes.portfolio.Money
 import `in`.rcard.fes.portfolio.PortfolioCommand.CreatePortfolio
+import `in`.rcard.fes.portfolio.PortfolioError.*
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.UserId
 import `in`.rcard.fes.portfolio.notCreatedPortfolio
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.every
@@ -41,6 +43,25 @@ class PortfolioHandleCommandTest : ShouldSpec({
                 with(eventStore) {
                     val actualResult = handle(CreatePortfolio(PortfolioId("1"), UserId("rcardin"), Money(100.0)))
                     actualResult.shouldBeRight(PortfolioId("1"))
+                }
+            }
+        }
+        should("not be created if already exists") {
+            val eventStore = mockk<PortfolioEventStore>()
+            every { eventStore.loadState(PortfolioId("1")) } returns (
+                "0" to listOf(
+                    PortfolioCreated(
+                        PortfolioId("1"),
+                        NOW.toEpochMilli(),
+                        UserId("rcardin"),
+                        Money(100.0),
+                    ),
+                )
+                )
+            with(FIXED_CLOCK) {
+                with(eventStore) {
+                    val actualResult = handle(CreatePortfolio(PortfolioId("1"), UserId("rcardin"), Money(100.0)))
+                    actualResult.shouldBeLeft(PortfolioAlreadyExists(PortfolioId("1")))
                 }
             }
         }
