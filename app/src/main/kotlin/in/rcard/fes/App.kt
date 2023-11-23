@@ -9,8 +9,6 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import arrow.core.raise.withError
 import arrow.core.toNonEmptyListOrNull
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.Portfolio
 import `in`.rcard.fes.portfolio.PortfolioCommand
 import `in`.rcard.fes.portfolio.PortfolioCommand.BuyStocks
@@ -25,6 +23,8 @@ import `in`.rcard.fes.portfolio.PortfolioEvent
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioClosed
 import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
 import `in`.rcard.fes.portfolio.PortfolioEventStore
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.availableFunds
 import `in`.rcard.fes.portfolio.id
