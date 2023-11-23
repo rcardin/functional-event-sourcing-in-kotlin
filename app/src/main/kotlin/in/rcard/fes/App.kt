@@ -27,10 +27,14 @@ import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.availableFunds
+import `in`.rcard.fes.portfolio.configureRouting
 import `in`.rcard.fes.portfolio.id
 import `in`.rcard.fes.portfolio.isAvailable
 import `in`.rcard.fes.portfolio.isClosed
 import `in`.rcard.fes.portfolio.ownedStocks
+import io.ktor.server.application.Application
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 
 // TODO Put a limit on the recursion depth
 context (PortfolioEventStore)
@@ -167,5 +171,10 @@ fun closePortfolio(
 fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio + event
 
 fun main() {
-    println("Hello World!")
+    embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
+        .start(wait = true)
+}
+
+fun Application.module() {
+    configureRouting()
 }
