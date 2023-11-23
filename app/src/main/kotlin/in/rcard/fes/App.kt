@@ -9,8 +9,8 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import arrow.core.raise.withError
 import arrow.core.toNonEmptyListOrNull
-import `in`.rcard.fes.PortfolioEventStore.EventStoreError
-import `in`.rcard.fes.PortfolioEventStore.EventStoreError.ConcurrentModificationError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.Portfolio
 import `in`.rcard.fes.portfolio.PortfolioCommand
 import `in`.rcard.fes.portfolio.PortfolioCommand.BuyStocks
@@ -24,6 +24,7 @@ import `in`.rcard.fes.portfolio.PortfolioError.PriceNotAvailable
 import `in`.rcard.fes.portfolio.PortfolioEvent
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioClosed
 import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
+import `in`.rcard.fes.portfolio.PortfolioEventStore
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.availableFunds
 import `in`.rcard.fes.portfolio.id
@@ -164,24 +165,6 @@ fun closePortfolio(
 }
 
 fun evolve(portfolio: Portfolio, event: PortfolioEvent): Portfolio = portfolio + event
-
-typealias ETag = String
-
-typealias LoadedPortfolio = Pair<ETag, Portfolio>
-
-class PortfolioEventStore {
-
-    suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio> = TODO()
-
-    suspend fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Either<EventStoreError, Unit> =
-        TODO()
-
-    sealed interface EventStoreError {
-        data class StateLoadingError(val portfolioId: PortfolioId) : EventStoreError
-        data class ConcurrentModificationError(val portfolioId: PortfolioId) : EventStoreError
-        data class StateSavingError(val portfolioId: PortfolioId) : EventStoreError
-    }
-}
 
 fun main() {
     println("Hello World!")

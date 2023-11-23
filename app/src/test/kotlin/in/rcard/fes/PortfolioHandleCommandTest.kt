@@ -3,13 +3,14 @@ package `in`.rcard.fes
 import arrow.core.left
 import arrow.core.nonEmptyListOf
 import arrow.core.right
-import `in`.rcard.fes.PortfolioEventStore.EventStoreError.ConcurrentModificationError
-import `in`.rcard.fes.PortfolioEventStore.EventStoreError.StateLoadingError
-import `in`.rcard.fes.PortfolioEventStore.EventStoreError.StateSavingError
 import `in`.rcard.fes.portfolio.Money
 import `in`.rcard.fes.portfolio.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.portfolio.PortfolioError.PortfolioAlreadyExists
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
+import `in`.rcard.fes.portfolio.PortfolioEventStore
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.StateLoadingError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.StateSavingError
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.UserId
 import `in`.rcard.fes.portfolio.notCreatedPortfolio
