@@ -1,7 +1,11 @@
 package `in`.rcard.fes
 
+import arrow.core.left
 import arrow.core.nonEmptyListOf
 import arrow.core.right
+import `in`.rcard.fes.PortfolioEventStore.EventStoreError.ConcurrentModificationError
+import `in`.rcard.fes.PortfolioEventStore.EventStoreError.StateLoadingError
+import `in`.rcard.fes.PortfolioEventStore.EventStoreError.StateSavingError
 import `in`.rcard.fes.portfolio.Money
 import `in`.rcard.fes.portfolio.PortfolioCommand.CreatePortfolio
 import `in`.rcard.fes.portfolio.PortfolioError.PortfolioAlreadyExists
@@ -22,8 +26,8 @@ private val NOW: Instant = Instant.now()
 private val FIXED_CLOCK: Clock = Clock.fixed(NOW, ZoneId.of("UTC"))
 
 class PortfolioHandleCommandTest : ShouldSpec({
-    context("a portfolio") {
-        should("be created").config(coroutineTestScope = true) {
+    context("The handle function") {
+        should("return the portfolio id in case of no error").config(coroutineTestScope = true) {
             val eventStore = mockk<PortfolioEventStore>()
             coEvery { eventStore.loadState(PortfolioId("1")) } returns ("0" to notCreatedPortfolio).right()
             coEvery {
@@ -47,7 +51,7 @@ class PortfolioHandleCommandTest : ShouldSpec({
                 }
             }
         }
-        should("not be created if already exists").config(coroutineTestScope = true) {
+        should("return a portfolio error").config(coroutineTestScope = true) {
             val eventStore = mockk<PortfolioEventStore>()
             coEvery { eventStore.loadState(PortfolioId("1")) } returns (
                 "0" to listOf(
@@ -66,14 +70,63 @@ class PortfolioHandleCommandTest : ShouldSpec({
                 }
             }
         }
-        should("be closed") {
-            // TODO
+        should("return an event store error in case of error during the loading of the event").config(coroutineTestScope = true) {
+            val eventStore = mockk<PortfolioEventStore>()
+            coEvery { eventStore.loadState(PortfolioId("1")) } returns StateLoadingError(PortfolioId("1")).left()
+            with(FIXED_CLOCK) {
+                with(eventStore) {
+                    val actualResult = handle(CreatePortfolio(PortfolioId("1"), UserId("rcardin"), Money(100.0)))
+                    actualResult.shouldBeLeft(Union.First(StateLoadingError(PortfolioId("1"))))
+                }
+            }
         }
-        should("buy stocks") {
-            // TODO
+        should("return an event store error in case of error during the saving of the event").config(coroutineTestScope = true) {
+            val eventStore = mockk<PortfolioEventStore>()
+            coEvery { eventStore.loadState(PortfolioId("1")) } returns ("0" to notCreatedPortfolio).right()
+            coEvery {
+                eventStore.saveState(
+                    PortfolioId("1"),
+                    "0",
+                    nonEmptyListOf(
+                        PortfolioCreated(
+                            PortfolioId("1"),
+                            NOW.toEpochMilli(),
+                            UserId("rcardin"),
+                            Money(100.0),
+                        ),
+                    ),
+                )
+            } returns StateSavingError(PortfolioId("1")).left()
+            with(FIXED_CLOCK) {
+                with(eventStore) {
+                    val actualResult = handle(CreatePortfolio(PortfolioId("1"), UserId("rcardin"), Money(100.0)))
+                    actualResult.shouldBeLeft(Union.First(StateSavingError(PortfolioId("1"))))
+                }
+            }
         }
-        should("sell stocks") {
-            // TODO
+        should("retry the save operation in case of concurrent modification error").config(coroutineTestScope = true) {
+            val eventStore = mockk<PortfolioEventStore>()
+            coEvery { eventStore.loadState(PortfolioId("1")) } returns ("0" to notCreatedPortfolio).right()
+            coEvery {
+                eventStore.saveState(
+                    PortfolioId("1"),
+                    "0",
+                    nonEmptyListOf(
+                        PortfolioCreated(
+                            PortfolioId("1"),
+                            NOW.toEpochMilli(),
+                            UserId("rcardin"),
+                            Money(100.0),
+                        ),
+                    ),
+                )
+            } returns ConcurrentModificationError(PortfolioId("1")).left() andThen Unit.right()
+            with(FIXED_CLOCK) {
+                with(eventStore) {
+                    val actualResult = handle(CreatePortfolio(PortfolioId("1"), UserId("rcardin"), Money(100.0)))
+                    actualResult.shouldBeRight(PortfolioId("1"))
+                }
+            }
         }
     }
 })
