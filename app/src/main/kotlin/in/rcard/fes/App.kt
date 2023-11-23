@@ -30,9 +30,9 @@ import `in`.rcard.fes.portfolio.id
 import `in`.rcard.fes.portfolio.isAvailable
 import `in`.rcard.fes.portfolio.isClosed
 import `in`.rcard.fes.portfolio.ownedStocks
-import java.time.Clock
 
-context (Clock, PortfolioEventStore)
+// TODO Put a limit on the recursion depth
+context (PortfolioEventStore)
 suspend fun handle(command: PortfolioCommand): Either<Union<EventStoreError, PortfolioError>, PortfolioId> = either {
     val (eTag, portfolio) = withError({ Union.First(it) }) { loadState(command.portfolioId).bind() }
     val events = withError({ Union.Second(it) }) { decide(command, portfolio).bind() }
@@ -55,7 +55,6 @@ sealed interface Union<out A, out B> {
     data class Second<B>(val value: B) : Union<Nothing, B>
 }
 
-context(Clock)
 fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
     when (command) {
         is CreatePortfolio -> createPortfolio(portfolio, command)
@@ -64,7 +63,6 @@ fun decide(command: PortfolioCommand, portfolio: Portfolio): Either<PortfolioErr
         is ClosePortfolio -> closePortfolio(portfolio, command)
     }
 
-context(Clock)
 private fun createPortfolio(
     portfolio: Portfolio,
     command: CreatePortfolio,
@@ -75,14 +73,13 @@ private fun createPortfolio(
     nonEmptyListOf(
         PortfolioEvent.PortfolioCreated(
             command.portfolioId,
-            this@Clock.millis(),
+            command.occurredOn,
             command.userId,
             command.amount,
         ),
     )
 }
 
-context(Clock)
 private fun buyStocks(
     portfolio: Portfolio,
     command: BuyStocks,
@@ -101,7 +98,7 @@ private fun buyStocks(
     nonEmptyListOf(
         PortfolioEvent.StocksPurchased(
             command.portfolioId,
-            this@Clock.millis(),
+            command.occurredOn,
             command.stock,
             command.quantity,
             command.price,
@@ -109,7 +106,6 @@ private fun buyStocks(
     )
 }
 
-context(Clock)
 private fun sellStocks(
     portfolio: Portfolio,
     command: SellStocks,
@@ -132,7 +128,7 @@ private fun sellStocks(
     nonEmptyListOf(
         StocksSold(
             command.portfolioId,
-            this@Clock.millis(),
+            command.occurredOn,
             command.stock,
             command.quantity,
             command.price,
@@ -140,7 +136,6 @@ private fun sellStocks(
     )
 }
 
-context(Clock)
 fun closePortfolio(
     portfolio: Portfolio,
     command: ClosePortfolio,
@@ -151,7 +146,7 @@ fun closePortfolio(
     val stocksSoldEvents: List<StocksSold> = portfolio.ownedStocks().map {
         StocksSold(
             command.portfolioId,
-            this@Clock.millis(),
+            command.occurredOn,
             it.stock,
             it.quantity,
             command.prices[it.stock] ?: raise(
@@ -159,11 +154,11 @@ fun closePortfolio(
             ),
         )
     }
-    (stocksSoldEvents + PortfolioClosed(command.portfolioId, this@Clock.millis())).toNonEmptyListOrNull()
+    (stocksSoldEvents + PortfolioClosed(command.portfolioId, command.occurredOn)).toNonEmptyListOrNull()
         ?: nonEmptyListOf(
             PortfolioClosed(
                 command.portfolioId,
-                this@Clock.millis(),
+                command.occurredOn,
             ),
         )
 }
