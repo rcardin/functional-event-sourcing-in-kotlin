@@ -25,8 +25,10 @@ repositories {
 dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.kotest.extensions:kotest-assertions-arrow:1.4.0")
+    testImplementation("io.kotest.extensions:kotest-assertions-ktor:2.0.0")
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("io.ktor:ktor-client-content-negotiation-jvm")
     implementation("io.arrow-kt:arrow-core:1.2.1")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("io.ktor:ktor-server-core-jvm")

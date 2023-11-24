@@ -32,9 +32,12 @@ import `in`.rcard.fes.portfolio.id
 import `in`.rcard.fes.portfolio.isAvailable
 import `in`.rcard.fes.portfolio.isClosed
 import `in`.rcard.fes.portfolio.ownedStocks
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 
 // TODO Put a limit on the recursion depth
 context (PortfolioEventStore)
@@ -176,5 +179,8 @@ fun main() {
 }
 
 fun Application.module() {
+    install(ContentNegotiation) {
+        json()
+    }
     configureRouting()
 }
