@@ -28,6 +28,7 @@ dependencies {
     testImplementation("io.kotest.extensions:kotest-assertions-ktor:2.0.0")
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("io.ktor:ktor-client-content-negotiation-jvm")
     implementation("io.arrow-kt:arrow-core:1.2.1")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")

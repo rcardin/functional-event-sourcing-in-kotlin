@@ -180,7 +180,9 @@ fun main() {
 
 fun Application.module() {
     install(ContentNegotiation) {
-        json()
+        json(
+            contentType = io.ktor.http.ContentType.Application.Json,
+        )
     }
     configureRouting()
 }
