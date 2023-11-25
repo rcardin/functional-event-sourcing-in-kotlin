@@ -179,10 +179,12 @@ fun main() {
 }
 
 fun Application.module() {
-    install(ContentNegotiation) {
-        json(
-            contentType = io.ktor.http.ContentType.Application.Json,
-        )
-    }
+    configureSerialization()
     configureRouting()
+}
+
+fun Application.configureSerialization() {
+    install(ContentNegotiation) {
+        json()
+    }
 }
