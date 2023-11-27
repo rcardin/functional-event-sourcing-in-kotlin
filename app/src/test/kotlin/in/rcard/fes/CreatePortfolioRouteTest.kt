@@ -51,5 +51,22 @@ class CreatePortfolioRouteTest : ShouldSpec({
                 response.bodyAsText().shouldBe("InvalidFieldError(field=userId, error=The userId cannot be empty)")
             }
         }
+        should("return a 400 status code if the request has an amount less than or equal to zero") {
+            testApplication {
+                application {
+                    module()
+                }
+                val client = createClient {
+                    install(ContentNegotiation) { json() }
+                }
+                val response = client.post {
+                    url("/portfolios")
+                    contentType(ContentType.Application.Json)
+                    setBody(CreatePortfolioDTO("rcardin", -1.0))
+                }
+                response.shouldHaveStatus(400)
+                response.bodyAsText().shouldBe("InvalidFieldError(field=amount, error=The amount cannot be negative or zero)")
+            }
+        }
     }
 })

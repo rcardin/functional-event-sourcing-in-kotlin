@@ -30,8 +30,8 @@ fun String.validUserId(): EitherNel<InvalidFieldError, String> = if (this.isBlan
     this.right()
 }
 
-fun Double.validAmount(): EitherNel<InvalidFieldError, Double> = if (this < 0.0) {
-    nonEmptyListOf(InvalidFieldError("amount", "The amount cannot be negative")).left()
+fun Double.validAmount(): EitherNel<InvalidFieldError, Double> = if (this <= 0.0) {
+    nonEmptyListOf(InvalidFieldError("amount", "The amount cannot be negative or zero")).left()
 } else {
     this.right()
 }
