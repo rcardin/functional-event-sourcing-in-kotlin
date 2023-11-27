@@ -27,17 +27,23 @@ import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.availableFunds
+import `in`.rcard.fes.portfolio.configure
 import `in`.rcard.fes.portfolio.configureRouting
 import `in`.rcard.fes.portfolio.id
 import `in`.rcard.fes.portfolio.isAvailable
 import `in`.rcard.fes.portfolio.isClosed
 import `in`.rcard.fes.portfolio.ownedStocks
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.requestvalidation.RequestValidation
+import io.ktor.server.plugins.requestvalidation.RequestValidationException
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.response.respond
 
 // TODO Put a limit on the recursion depth
 context (PortfolioEventStore)
@@ -181,10 +187,26 @@ fun main() {
 fun Application.module() {
     configureSerialization()
     configureRouting()
+    configureRequestValidation()
+    configureStatusPages()
 }
 
 fun Application.configureSerialization() {
     install(ContentNegotiation) {
         json()
+    }
+}
+
+fun Application.configureRequestValidation() {
+    install(RequestValidation) {
+        configure()
+    }
+}
+
+fun Application.configureStatusPages() {
+    install(StatusPages) {
+        exception<RequestValidationException> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, cause.reasons.joinToString())
+        }
     }
 }

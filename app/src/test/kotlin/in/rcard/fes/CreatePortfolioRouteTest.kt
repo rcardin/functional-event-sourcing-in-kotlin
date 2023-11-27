@@ -32,5 +32,21 @@ class CreatePortfolioRouteTest : ShouldSpec({
                 response.shouldHaveHeader("Location", "/portfolios/1")
             }
         }
+        should("return a 400 status code if the request has an empty userId") {
+            testApplication {
+                application {
+                    module()
+                }
+                val client = createClient {
+                    install(ContentNegotiation) { json() }
+                }
+                val response = client.post {
+                    url("/portfolios")
+                    contentType(ContentType.Application.Json)
+                    setBody(CreatePortfolioDTO("", 100.0))
+                }
+                response.shouldHaveStatus(400)
+            }
+        }
     }
 })
