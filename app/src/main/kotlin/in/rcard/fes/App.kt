@@ -206,6 +206,7 @@ fun Application.configureRequestValidation() {
 fun Application.configureStatusPages() {
     install(StatusPages) {
         exception<RequestValidationException> { call, cause ->
+            call.response.status(HttpStatusCode.BadRequest)
             call.respond(HttpStatusCode.BadRequest, cause.reasons.joinToString())
         }
     }

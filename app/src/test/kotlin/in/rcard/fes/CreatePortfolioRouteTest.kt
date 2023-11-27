@@ -4,10 +4,12 @@ import `in`.rcard.fes.portfolio.CreatePortfolioDTO
 import io.kotest.assertions.ktor.client.shouldHaveHeader
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.request.url
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
@@ -46,6 +48,7 @@ class CreatePortfolioRouteTest : ShouldSpec({
                     setBody(CreatePortfolioDTO("", 100.0))
                 }
                 response.shouldHaveStatus(400)
+                response.bodyAsText().shouldBe("InvalidFieldError(field=userId, error=The userId cannot be empty)")
             }
         }
     }

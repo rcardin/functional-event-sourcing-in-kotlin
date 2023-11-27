@@ -24,16 +24,16 @@ fun CreatePortfolioDTO.validate(): ValidationResult =
         { ValidationResult.Valid },
     )
 
-fun String.validUserId(): EitherNel<ValidationError, String> = if (this.isBlank()) {
-    nonEmptyListOf(ValidationError("userId", "The userId cannot be empty")).left()
+fun String.validUserId(): EitherNel<InvalidFieldError, String> = if (this.isBlank()) {
+    nonEmptyListOf(InvalidFieldError("userId", "The userId cannot be empty")).left()
 } else {
     this.right()
 }
 
-fun Double.validAmount(): EitherNel<ValidationError, Double> = if (this < 0.0) {
-    nonEmptyListOf(ValidationError("amount", "The amount cannot be negative")).left()
+fun Double.validAmount(): EitherNel<InvalidFieldError, Double> = if (this < 0.0) {
+    nonEmptyListOf(InvalidFieldError("amount", "The amount cannot be negative")).left()
 } else {
     this.right()
 }
 
-data class ValidationError(val field: String, val error: String)
+data class InvalidFieldError(val field: String, val error: String)
