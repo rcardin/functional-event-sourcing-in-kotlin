@@ -6,7 +6,7 @@ typealias Portfolio = List<PortfolioEvent>
 typealias Prices = Map<Stock, Money>
 
 @JvmInline
-value class PortfolioId(private val id: String)
+value class PortfolioId(val id: String)
 
 @JvmInline
 value class UserId(private val id: String) {
