@@ -2,7 +2,11 @@ package `in`.rcard.fes.portfolio
 
 import arrow.core.Either
 import arrow.core.right
+import com.eventstore.dbclient.AppendToStreamOptions
+import com.eventstore.dbclient.EventData
 import com.eventstore.dbclient.EventStoreDBClient
+import com.eventstore.dbclient.ExpectedRevision
+import com.eventstore.dbclient.ExpectedRevision.noStream
 import com.eventstore.dbclient.ReadResult
 import com.eventstore.dbclient.ReadStreamOptions
 import com.eventstore.dbclient.RecordedEvent
@@ -14,15 +18,21 @@ import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.json.Json
+import java.util.*
 
-typealias ETag = String
+typealias ETag = Long
 typealias LoadedPortfolio = Pair<ETag, Portfolio>
 
 interface PortfolioEventStore {
 
     suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio>
 
-    suspend fun saveState(portfolioId: PortfolioId, eTag: ETag, portfolio: Portfolio): Either<EventStoreError, Unit>
+    suspend fun saveState(
+        portfolioId: PortfolioId,
+        eTag: ETag,
+        oldPortfolio: Portfolio,
+        newPortfolio: Portfolio,
+    ): Either<EventStoreError, Unit>
 
     sealed interface EventStoreError {
         data class StateLoadingError(val portfolioId: PortfolioId) : EventStoreError
@@ -40,7 +50,7 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
         // TODO Check if the stream exists
         val result: ReadResult = eventStoreClient.readStream("portfolio-${portfolioId.id}", options).await()
 
-        val eTag: String = maxPosition(result.events).toString()
+        val eTag: Long = maxPosition(result.events)
         val loadedEvents = result.events.map { decode(it.originalEvent) }
         return (eTag to loadedEvents).right()
     }
@@ -61,8 +71,36 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
     override suspend fun saveState(
         portfolioId: PortfolioId,
         eTag: ETag,
-        portfolio: Portfolio,
+        oldPortfolio: Portfolio,
+        newPortfolio: Portfolio,
     ): Either<EventStoreError, Unit> {
-        TODO("Not yet implemented")
+        val eventsToPersist = newPortfolio - oldPortfolio
+
+        val appendToStreamOptions: AppendToStreamOptions = AppendToStreamOptions.get().let { options ->
+            when (eTag) {
+                -1L -> options.expectedRevision(noStream())
+                else -> options.expectedRevision(ExpectedRevision.expectedRevision(eTag))
+            }
+        }
+
+        val eventDataList = eventsToPersist.map { event ->
+            EventData.builderAsJson(
+                UUID.randomUUID(), // TODO Should we move away from here?
+                event.eventType(),
+                event,
+            ).build()
+        }
+
+        // WrongExpectedVersionException
+        eventStoreClient.appendToStream("portfolio-${portfolioId.id}", appendToStreamOptions, eventDataList.iterator())
+
+        return Unit.right()
     }
+}
+
+private fun PortfolioEvent.eventType(): String = when (this) {
+    is PortfolioCreated -> "PortfolioCreated"
+    is StocksPurchased -> "StocksPurchased"
+    is StocksSold -> "StocksSold"
+    is PortfolioClosed -> "PortfolioClosed"
 }

@@ -51,7 +51,7 @@ suspend fun handle(command: PortfolioCommand): Either<Union<EventStoreError, Por
     val (eTag, portfolio) = withError({ Union.First(it) }) { loadState(command.portfolioId).bind() }
     val events = withError({ Union.Second(it) }) { decide(command, portfolio).bind() }
     val newPortfolio = events.fold(portfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
-    saveState(command.portfolioId, eTag, newPortfolio).fold(
+    saveState(command.portfolioId, eTag, portfolio, newPortfolio).fold(
         {
             when (it) {
                 is ConcurrentModificationError -> handle(command).bind()
