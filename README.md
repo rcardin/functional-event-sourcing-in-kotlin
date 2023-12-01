@@ -1,4 +1,5 @@
 ![Kotlin Version](https://img.shields.io/badge/Kotlin-1.9.20-blue?style=flat&logo=kotlin)
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/rcardin/functional-event-sourcing-in-kotlin/ci.yml?branch=main)
 <a href="https://pinterest.github.io/ktlint/"><img src="https://img.shields.io/badge/code%20style-%E2%9D%A4-FF4081.svg" alt="ktlint"></a>
 
 # Functional Event-Sourcing in Kotlin
