@@ -27,11 +27,12 @@ class PortfolioHandleCommandTest : ShouldSpec({
     context("The handle function") {
         should("return the portfolio id in case of no error").config(coroutineTestScope = true) {
             val eventStore = mockk<PortfolioEventStore>()
-            coEvery { eventStore.loadState(PortfolioId("1")) } returns ("0" to notCreatedPortfolio).right()
+            coEvery { eventStore.loadState(PortfolioId("1")) } returns (0L to notCreatedPortfolio).right()
             coEvery {
                 eventStore.saveState(
                     PortfolioId("1"),
-                    "0",
+                    0L,
+                    notCreatedPortfolio,
                     nonEmptyListOf(
                         PortfolioCreated(
                             PortfolioId("1"),
@@ -51,7 +52,7 @@ class PortfolioHandleCommandTest : ShouldSpec({
         should("return a portfolio error").config(coroutineTestScope = true) {
             val eventStore = mockk<PortfolioEventStore>()
             coEvery { eventStore.loadState(PortfolioId("1")) } returns (
-                "0" to listOf(
+                0L to listOf(
                     PortfolioCreated(
                         PortfolioId("1"),
                         NOW_MILLIS,
@@ -77,11 +78,12 @@ class PortfolioHandleCommandTest : ShouldSpec({
         }
         should("return an event store error in case of error during the saving of the event").config(coroutineTestScope = true) {
             val eventStore = mockk<PortfolioEventStore>()
-            coEvery { eventStore.loadState(PortfolioId("1")) } returns ("0" to notCreatedPortfolio).right()
+            coEvery { eventStore.loadState(PortfolioId("1")) } returns (0L to notCreatedPortfolio).right()
             coEvery {
                 eventStore.saveState(
                     PortfolioId("1"),
-                    "0",
+                    0L,
+                    notCreatedPortfolio,
                     nonEmptyListOf(
                         PortfolioCreated(
                             PortfolioId("1"),
@@ -100,11 +102,12 @@ class PortfolioHandleCommandTest : ShouldSpec({
         }
         should("retry the save operation in case of concurrent modification error").config(coroutineTestScope = true) {
             val eventStore = mockk<PortfolioEventStore>()
-            coEvery { eventStore.loadState(PortfolioId("1")) } returns ("0" to notCreatedPortfolio).right()
+            coEvery { eventStore.loadState(PortfolioId("1")) } returns (0L to notCreatedPortfolio).right()
             coEvery {
                 eventStore.saveState(
                     PortfolioId("1"),
-                    "0",
+                    0L,
+                    notCreatedPortfolio,
                     nonEmptyListOf(
                         PortfolioCreated(
                             PortfolioId("1"),

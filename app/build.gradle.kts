@@ -10,11 +10,22 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.9.20"
+    id("java")
     id("io.ktor.plugin") version "2.3.6"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.20"
 
     // Apply the application plugin to add support for building a CLI application in Java.
     application
+}
+
+sourceSets.main {
+    java.srcDirs("src/main/kotlin", "src/main/java")
+    resources.srcDir("src/main/resources")
+}
+
+sourceSets.test {
+    java.srcDirs("src/test/kotlin", "src/test/java")
+    resources.srcDir("src/test/resources")
 }
 
 repositories {
@@ -30,6 +41,10 @@ dependencies {
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("io.ktor:ktor-client-content-negotiation-jvm")
+    testImplementation("io.grpc:grpc-api:1.59.1")
+    testImplementation("com.github.docker-java:docker-java:3.3.4")
+    testImplementation("org.testcontainers:testcontainers:1.19.3")
+    testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     implementation("io.arrow-kt:arrow-core:1.2.1")
     implementation("io.arrow-kt:arrow-fx-coroutines:1.2.1")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
