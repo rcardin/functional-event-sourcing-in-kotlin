@@ -1,6 +1,8 @@
 package `in`.rcard.fes.portfolio
 
 import arrow.core.Either
+import arrow.core.raise.catch
+import arrow.core.raise.either
 import arrow.core.right
 import com.eventstore.dbclient.AppendToStreamOptions
 import com.eventstore.dbclient.EventData
@@ -11,14 +13,17 @@ import com.eventstore.dbclient.ReadResult
 import com.eventstore.dbclient.ReadStreamOptions
 import com.eventstore.dbclient.RecordedEvent
 import com.eventstore.dbclient.ResolvedEvent
+import com.eventstore.dbclient.WrongExpectedVersionException
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioClosed
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
 import `in`.rcard.fes.portfolio.PortfolioEvent.StocksPurchased
 import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.json.Json
 import java.util.*
+import java.util.concurrent.CancellationException
 
 typealias ETag = Long
 typealias LoadedPortfolio = Pair<ETag, Portfolio>
@@ -73,7 +78,7 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
         eTag: ETag,
         oldPortfolio: Portfolio,
         newPortfolio: Portfolio,
-    ): Either<EventStoreError, Unit> {
+    ): Either<EventStoreError, Unit> = either {
         val eventsToPersist = newPortfolio - oldPortfolio
 
         val appendToStreamOptions: AppendToStreamOptions = AppendToStreamOptions.get().let { options ->
@@ -91,10 +96,26 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
             ).build()
         }
 
-        // WrongExpectedVersionException
-        eventStoreClient.appendToStream("portfolio-${portfolioId.id}", appendToStreamOptions, eventDataList.iterator())
-
-        return Unit.right()
+        catch(
+            {
+                eventStoreClient.appendToStream(
+                    "portfolio-${portfolioId.id}",
+                    appendToStreamOptions,
+                    eventDataList.iterator(),
+                )
+                    .await()
+            },
+        ) { error: Throwable ->
+            when (error) {
+                is WrongExpectedVersionException -> raise(ConcurrentModificationError(portfolioId))
+                // TODO Is it correct?
+                is CancellationException -> throw error
+                else ->
+                    // TODO Add Logging
+                    raise(EventStoreError.StateSavingError(portfolioId))
+            }
+        }
+        Unit
     }
 }
 
