@@ -110,9 +110,10 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
                 is WrongExpectedVersionException -> raise(ConcurrentModificationError(portfolioId))
                 // TODO Is it correct?
                 is CancellationException -> throw error
-                else ->
-                    // TODO Add Logging
+                else -> {
+                    println("The error is: $error")
                     raise(EventStoreError.StateSavingError(portfolioId))
+                }
             }
         }
         Unit

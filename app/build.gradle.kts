@@ -41,9 +41,11 @@ dependencies {
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("io.ktor:ktor-client-content-negotiation-jvm")
-    testImplementation("io.grpc:grpc-api:1.59.1")
-    testImplementation("com.github.docker-java:docker-java:3.3.4")
-    testImplementation("org.testcontainers:testcontainers:1.19.3")
+    testImplementation("io.grpc:grpc-api:1.59.0")
+    testImplementation("com.github.docker-java:docker-java:3.3.3") {
+        exclude(group = "com.google.guava", module = "guava")
+    }
+    testImplementation("org.testcontainers:testcontainers:1.19.1")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     implementation("io.arrow-kt:arrow-core:1.2.1")
     implementation("io.arrow-kt:arrow-fx-coroutines:1.2.1")
