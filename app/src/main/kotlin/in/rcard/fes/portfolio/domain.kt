@@ -1,18 +1,23 @@
 package `in`.rcard.fes.portfolio
 
+import kotlinx.serialization.Serializable
+
 // Easiest implementation of the domain
 typealias Portfolio = List<PortfolioEvent>
 
 typealias Prices = Map<Stock, Money>
 
+@Serializable
 @JvmInline
 value class PortfolioId(val id: String)
 
+@Serializable
 @JvmInline
 value class UserId(private val id: String) {
     override fun toString(): String = id
 }
 
+@Serializable
 @JvmInline
 value class Money(private val amount: Double) {
     operator fun plus(money: Money): Money = Money(this.amount + money.amount)

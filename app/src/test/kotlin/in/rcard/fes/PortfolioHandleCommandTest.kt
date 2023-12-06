@@ -42,7 +42,7 @@ class PortfolioHandleCommandTest : ShouldSpec({
                         ),
                     ),
                 )
-            } returns Unit.right()
+            } returns PortfolioId("1").right()
             with(eventStore) {
                 val actualResult =
                     handle(CreatePortfolio(PortfolioId("1"), NOW_MILLIS, UserId("rcardin"), Money(100.0)))
@@ -117,7 +117,7 @@ class PortfolioHandleCommandTest : ShouldSpec({
                         ),
                     ),
                 )
-            } returns ConcurrentModificationError(PortfolioId("1")).left() andThen Unit.right()
+            } returns ConcurrentModificationError(PortfolioId("1")).left() andThen PortfolioId("1").right()
             with(eventStore) {
                 val actualResult =
                     handle(CreatePortfolio(PortfolioId("1"), NOW_MILLIS, UserId("rcardin"), Money(100.0)))

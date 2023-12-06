@@ -5,7 +5,7 @@ import arrow.core.raise.catch
 import arrow.core.raise.either
 import arrow.core.right
 import com.eventstore.dbclient.AppendToStreamOptions
-import com.eventstore.dbclient.EventData
+import com.eventstore.dbclient.EventDataBuilder
 import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.ExpectedRevision
 import com.eventstore.dbclient.ExpectedRevision.noStream
@@ -21,6 +21,7 @@ import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import kotlinx.coroutines.future.await
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -37,7 +38,7 @@ interface PortfolioEventStore {
         eTag: ETag,
         oldPortfolio: Portfolio,
         newPortfolio: Portfolio,
-    ): Either<EventStoreError, Unit>
+    ): Either<EventStoreError, PortfolioId>
 
     sealed interface EventStoreError {
         data class StateLoadingError(val portfolioId: PortfolioId) : EventStoreError
@@ -78,7 +79,7 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
         eTag: ETag,
         oldPortfolio: Portfolio,
         newPortfolio: Portfolio,
-    ): Either<EventStoreError, Unit> = either {
+    ): Either<EventStoreError, PortfolioId> = either {
         val eventsToPersist = newPortfolio - oldPortfolio
 
         val appendToStreamOptions: AppendToStreamOptions = AppendToStreamOptions.get().let { options ->
@@ -89,10 +90,10 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
         }
 
         val eventDataList = eventsToPersist.map { event ->
-            EventData.builderAsJson(
-                UUID.randomUUID(), // TODO Should we move away from here?
+            EventDataBuilder.json(
+                UUID.randomUUID(),
                 event.eventType(),
-                event,
+                Json.encodeToString(event).encodeToByteArray(),
             ).build()
         }
 
@@ -116,7 +117,7 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
                 }
             }
         }
-        Unit
+        portfolioId
     }
 }
 

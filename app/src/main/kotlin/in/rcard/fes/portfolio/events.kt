@@ -1,9 +1,13 @@
 package `in`.rcard.fes.portfolio
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 sealed interface PortfolioEvent {
     val portfolioId: PortfolioId
     val occurredOn: Long
 
+    @Serializable
     data class PortfolioCreated(
         override val portfolioId: PortfolioId,
         override val occurredOn: Long,
