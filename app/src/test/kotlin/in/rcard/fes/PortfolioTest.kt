@@ -20,6 +20,8 @@ import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.Quantity
 import `in`.rcard.fes.portfolio.Stock
 import `in`.rcard.fes.portfolio.UserId
+import `in`.rcard.fes.portfolio.decide
+import `in`.rcard.fes.portfolio.evolve
 import `in`.rcard.fes.portfolio.notCreatedPortfolio
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight

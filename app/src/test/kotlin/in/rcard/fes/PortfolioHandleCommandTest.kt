@@ -12,7 +12,9 @@ import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentMo
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.StateLoadingError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.StateSavingError
 import `in`.rcard.fes.portfolio.PortfolioId
+import `in`.rcard.fes.portfolio.Union
 import `in`.rcard.fes.portfolio.UserId
+import `in`.rcard.fes.portfolio.handle
 import `in`.rcard.fes.portfolio.notCreatedPortfolio
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
