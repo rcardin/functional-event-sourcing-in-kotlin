@@ -16,6 +16,7 @@ sealed interface PortfolioEvent {
     ) :
         PortfolioEvent
 
+    @Serializable
     data class StocksPurchased(
         override val portfolioId: PortfolioId,
         override val occurredOn: Long,
@@ -24,6 +25,7 @@ sealed interface PortfolioEvent {
         val price: Money,
     ) : PortfolioEvent
 
+    @Serializable
     data class StocksSold(
         override val portfolioId: PortfolioId,
         override val occurredOn: Long,
@@ -32,5 +34,6 @@ sealed interface PortfolioEvent {
         val price: Money,
     ) : PortfolioEvent
 
+    @Serializable
     data class PortfolioClosed(override val portfolioId: PortfolioId, override val occurredOn: Long) : PortfolioEvent
 }

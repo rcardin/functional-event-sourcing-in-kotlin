@@ -5,6 +5,7 @@ import com.eventstore.dbclient.ReadResult
 import com.eventstore.dbclient.ReadStreamOptions
 import `in`.rcard.eventstore.DockerContainerDatabase
 import `in`.rcard.fes.portfolio.Money
+import `in`.rcard.fes.portfolio.PortfolioEvent
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.UserId
@@ -32,35 +33,35 @@ class EventStoreTest : ShouldSpec({
                 ),
             )
             val eventStoreDBClient = eventStoreDb.defaultClient()
-            val portfolioEventStore = portfolioEventStore(eventStoreDBClient)
-            portfolioEventStore.saveState(
-                PortfolioId("1"),
-                -1L,
-                notCreatedPortfolio,
-                nonEmptyListOf(
-                    PortfolioCreated(
-                        PortfolioId("1"),
-                        NOW_MILLIS,
-                        UserId("rcardin"),
-                        Money(100.0),
+            with(Json) {
+                val portfolioEventStore = portfolioEventStore(eventStoreDBClient)
+                portfolioEventStore.saveState(
+                    PortfolioId("1"),
+                    -1L,
+                    notCreatedPortfolio,
+                    nonEmptyListOf(
+                        PortfolioCreated(
+                            PortfolioId("1"),
+                            NOW_MILLIS,
+                            UserId("rcardin"),
+                            Money(100.0),
+                        ),
                     ),
-                ),
-            ).shouldBeRight(PortfolioId("1"))
+                ).shouldBeRight(PortfolioId("1"))
 
-            val result: ReadResult = eventStoreDBClient.readStream("portfolio-1", ReadStreamOptions.get()).get()
-            result.events.map {
-                Json {
-                    ignoreUnknownKeys = true
-                }.decodeFromString<PortfolioCreated>(it.originalEvent.eventData.decodeToString())
+                val result: ReadResult = eventStoreDBClient.readStream("portfolio-1", ReadStreamOptions.get()).get()
+                result.events.map {
+                    decodeFromString<PortfolioEvent>(it.originalEvent.eventData.decodeToString())
+                }
+                    .shouldContainExactly(
+                        PortfolioCreated(
+                            PortfolioId("1"),
+                            NOW_MILLIS,
+                            UserId("rcardin"),
+                            Money(100.0),
+                        ),
+                    )
             }
-                .shouldContainExactly(
-                    PortfolioCreated(
-                        PortfolioId("1"),
-                        NOW_MILLIS,
-                        UserId("rcardin"),
-                        Money(100.0),
-                    ),
-                )
         }
     }
 })

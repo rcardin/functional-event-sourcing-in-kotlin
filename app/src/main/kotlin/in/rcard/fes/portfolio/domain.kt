@@ -98,9 +98,11 @@ fun Portfolio.isClosed(): Boolean = this.last() is PortfolioEvent.PortfolioClose
 
 val notCreatedPortfolio: List<PortfolioEvent> = emptyList()
 
+@Serializable
 @JvmInline
 value class Stock(private val symbol: String)
 
+@Serializable
 @JvmInline
 value class Quantity(val amount: Int) {
     operator fun plus(qty: Quantity): Quantity = Quantity(this.amount + qty.amount)

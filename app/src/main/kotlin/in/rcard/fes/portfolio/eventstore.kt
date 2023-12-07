@@ -11,7 +11,6 @@ import com.eventstore.dbclient.ExpectedRevision
 import com.eventstore.dbclient.ExpectedRevision.noStream
 import com.eventstore.dbclient.ReadResult
 import com.eventstore.dbclient.ReadStreamOptions
-import com.eventstore.dbclient.RecordedEvent
 import com.eventstore.dbclient.ResolvedEvent
 import com.eventstore.dbclient.WrongExpectedVersionException
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioClosed
@@ -31,8 +30,10 @@ typealias LoadedPortfolio = Pair<ETag, Portfolio>
 
 interface PortfolioEventStore {
 
+    context (Json)
     suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio>
 
+    context (Json)
     suspend fun saveState(
         portfolioId: PortfolioId,
         eTag: ETag,
@@ -47,7 +48,9 @@ interface PortfolioEventStore {
     }
 }
 
+context (Json)
 fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventStore = object : PortfolioEventStore {
+
     override suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio> {
         val options = ReadStreamOptions.get()
             .forwards()
@@ -57,19 +60,10 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
         val result: ReadResult = eventStoreClient.readStream("portfolio-${portfolioId.id}", options).await()
 
         val eTag: Long = maxPosition(result.events)
-        val loadedEvents = result.events.map { decode(it.originalEvent) }
+        val loadedEvents =
+            result.events.map { decodeFromString<PortfolioEvent>(it.originalEvent.eventData.decodeToString()) }
         return (eTag to loadedEvents).right()
     }
-
-    private fun decode(recordedEvent: RecordedEvent): PortfolioEvent =
-        when (recordedEvent.eventType) {
-            "PortfolioCreated" -> Json.decodeFromString<PortfolioCreated>(recordedEvent.eventData.decodeToString())
-            "StocksPurchased" -> Json.decodeFromString<StocksPurchased>(recordedEvent.eventData.decodeToString())
-            "StocksSold" -> Json.decodeFromString<StocksSold>(recordedEvent.eventData.decodeToString())
-            "PortfolioClosed" -> Json.decodeFromString<PortfolioClosed>(recordedEvent.eventData.decodeToString())
-            else -> throw IllegalArgumentException("Unknown event type ${recordedEvent.eventType}")
-            // TODO Use a sealed class to represent the error
-        }
 
     private fun maxPosition(events: List<ResolvedEvent>) =
         events.maxByOrNull { it.originalEvent.revision }!!.originalEvent.revision
@@ -93,7 +87,7 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
             EventDataBuilder.json(
                 UUID.randomUUID(),
                 event.eventType(),
-                Json.encodeToString(event).encodeToByteArray(),
+                encodeToString(event).encodeToByteArray(),
             ).build()
         }
 

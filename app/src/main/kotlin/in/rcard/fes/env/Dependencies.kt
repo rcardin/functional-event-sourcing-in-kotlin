@@ -5,12 +5,15 @@ import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString
 import `in`.rcard.fes.portfolio.PortfolioEventStore
 import `in`.rcard.fes.portfolio.portfolioEventStore
+import kotlinx.serialization.json.Json
 
 class Dependencies(val portfolioEventStore: PortfolioEventStore)
 
 suspend fun ResourceScope.dependencies(env: Env): Dependencies {
     val eventStoreClient = eventStoreClient(env.eventStoreDataSource)
-    val portfolioEventStore = portfolioEventStore(eventStoreClient)
+    val portfolioEventStore = with(jsonModule()) {
+        portfolioEventStore(eventStoreClient)
+    }
     return Dependencies(portfolioEventStore)
 }
 
@@ -21,3 +24,5 @@ suspend fun ResourceScope.eventStoreClient(eventStoreDataSource: Env.EventStoreD
     }) { client, _ ->
         client.shutdown()
     }
+
+fun jsonModule() = Json
