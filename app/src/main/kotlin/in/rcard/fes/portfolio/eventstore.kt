@@ -19,11 +19,10 @@ import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.StateSavingError
+import java.util.*
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import java.util.*
-import java.util.concurrent.CancellationException
 
 typealias ETag = Long
 typealias LoadedPortfolio = Pair<ETag, Portfolio>
@@ -61,7 +60,6 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
             }) { error: Throwable ->
                 when (error) {
                     is StreamNotFoundException -> raise(EventStoreError.UnknownStreamError(portfolioId))
-                    is CancellationException -> throw error
                     else -> raise(EventStoreError.StateLoadingError(portfolioId))
                 }
             }
@@ -110,8 +108,6 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
             ) { error: Throwable ->
                 when (error) {
                     is WrongExpectedVersionException -> raise(ConcurrentModificationError(portfolioId))
-                    // TODO Is it correct?
-                    is CancellationException -> throw error
                     else -> {
                         println("The error is: $error")
                         raise(StateSavingError(portfolioId))
