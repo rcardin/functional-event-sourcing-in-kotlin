@@ -19,10 +19,10 @@ import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.StateSavingError
-import java.util.*
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.*
 
 typealias ETag = Long
 typealias LoadedPortfolio = Pair<ETag, Portfolio>
@@ -55,19 +55,18 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
             val options = ReadStreamOptions.get()
                 .forwards()
                 .fromStart()
-            val result = catch({
-                eventStoreClient.readStream("portfolio-${portfolioId.id}", options).await()
+            catch({
+                val result = eventStoreClient.readStream("portfolio-${portfolioId.id}", options).await()
+                val eTag: Long = maxPosition(result.events)
+                val loadedEvents =
+                    result.events.map { decodeFromString<PortfolioEvent>(it.originalEvent.eventData.decodeToString()) }
+                (eTag to loadedEvents)
             }) { error: Throwable ->
                 when (error) {
                     is StreamNotFoundException -> raise(EventStoreError.UnknownStreamError(portfolioId))
                     else -> raise(EventStoreError.StateLoadingError(portfolioId))
                 }
             }
-            val eTag: Long = maxPosition(result.events)
-            // TODO Should we trust what we read from the event store?
-            val loadedEvents =
-                result.events.map { decodeFromString<PortfolioEvent>(it.originalEvent.eventData.decodeToString()) }
-            (eTag to loadedEvents)
         }
 
         private fun maxPosition(events: List<ResolvedEvent>) =
@@ -119,8 +118,8 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
     }
 
 internal fun PortfolioEvent.eventType(): String = when (this) {
-    is PortfolioCreated -> "PortfolioCreated"
-    is StocksPurchased -> "StocksPurchased"
-    is StocksSold -> "StocksSold"
-    is PortfolioClosed -> "PortfolioClosed"
+    is PortfolioCreated -> "portfolio-created"
+    is StocksPurchased -> "stocks-purchased"
+    is StocksSold -> "stocks-sold"
+    is PortfolioClosed -> "portfolio-closed"
 }
