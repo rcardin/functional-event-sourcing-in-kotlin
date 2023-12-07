@@ -3,15 +3,14 @@ package `in`.rcard.fes.portfolio
 import arrow.core.Either
 import arrow.core.raise.catch
 import arrow.core.raise.either
-import arrow.core.right
 import com.eventstore.dbclient.AppendToStreamOptions
 import com.eventstore.dbclient.EventDataBuilder
 import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.ExpectedRevision
 import com.eventstore.dbclient.ExpectedRevision.noStream
-import com.eventstore.dbclient.ReadResult
 import com.eventstore.dbclient.ReadStreamOptions
 import com.eventstore.dbclient.ResolvedEvent
+import com.eventstore.dbclient.StreamNotFoundException
 import com.eventstore.dbclient.WrongExpectedVersionException
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioClosed
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
@@ -19,6 +18,7 @@ import `in`.rcard.fes.portfolio.PortfolioEvent.StocksPurchased
 import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
 import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.StateSavingError
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -40,6 +40,8 @@ interface PortfolioEventStore {
     ): Either<EventStoreError, PortfolioId>
 
     sealed interface EventStoreError {
+
+        data class UnknownStreamError(val portfolioId: PortfolioId) : EventStoreError
         data class StateLoadingError(val portfolioId: PortfolioId) : EventStoreError
         data class ConcurrentModificationError(val portfolioId: PortfolioId) : EventStoreError
         data class StateSavingError(val portfolioId: PortfolioId) : EventStoreError
@@ -50,18 +52,24 @@ context (Json)
 fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventStore =
     object : PortfolioEventStore {
 
-        override suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio> {
+        override suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio> = either {
             val options = ReadStreamOptions.get()
                 .forwards()
                 .fromStart()
-
-            // TODO Check if the stream exists
-            val result: ReadResult = eventStoreClient.readStream("portfolio-${portfolioId.id}", options).await()
-
+            val result = catch({
+                eventStoreClient.readStream("portfolio-${portfolioId.id}", options).await()
+            }) { error: Throwable ->
+                when (error) {
+                    is StreamNotFoundException -> raise(EventStoreError.UnknownStreamError(portfolioId))
+                    is CancellationException -> throw error
+                    else -> raise(EventStoreError.StateLoadingError(portfolioId))
+                }
+            }
             val eTag: Long = maxPosition(result.events)
+            // TODO Should we trust what we read from the event store?
             val loadedEvents =
                 result.events.map { decodeFromString<PortfolioEvent>(it.originalEvent.eventData.decodeToString()) }
-            return (eTag to loadedEvents).right()
+            (eTag to loadedEvents)
         }
 
         private fun maxPosition(events: List<ResolvedEvent>) =
@@ -106,7 +114,7 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
                     is CancellationException -> throw error
                     else -> {
                         println("The error is: $error")
-                        raise(EventStoreError.StateSavingError(portfolioId))
+                        raise(StateSavingError(portfolioId))
                     }
                 }
             }
@@ -114,7 +122,7 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
         }
     }
 
-private fun PortfolioEvent.eventType(): String = when (this) {
+internal fun PortfolioEvent.eventType(): String = when (this) {
     is PortfolioCreated -> "PortfolioCreated"
     is StocksPurchased -> "StocksPurchased"
     is StocksSold -> "StocksSold"
