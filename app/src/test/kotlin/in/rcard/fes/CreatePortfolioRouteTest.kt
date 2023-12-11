@@ -1,6 +1,8 @@
 package `in`.rcard.fes
 
+import `in`.rcard.fes.env.Dependencies
 import `in`.rcard.fes.portfolio.CreatePortfolioDTO
+import `in`.rcard.fes.portfolio.PortfolioService
 import io.kotest.assertions.ktor.client.shouldHaveHeader
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.ShouldSpec
@@ -14,13 +16,14 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.testApplication
+import io.mockk.mockk
 
 class CreatePortfolioRouteTest : ShouldSpec({
     context("The create portfolio route") {
         should("return a 201 status code if the portfolio has been created") {
             testApplication {
                 application {
-                    module()
+                    module(Dependencies(mockk<PortfolioService>()))
                 }
                 val client = createClient {
                     install(ContentNegotiation) { json() }
@@ -37,7 +40,7 @@ class CreatePortfolioRouteTest : ShouldSpec({
         should("return a 400 status code if the request has an empty userId") {
             testApplication {
                 application {
-                    module()
+                    module(Dependencies(mockk<PortfolioService>()))
                 }
                 val client = createClient {
                     install(ContentNegotiation) { json() }
@@ -54,7 +57,7 @@ class CreatePortfolioRouteTest : ShouldSpec({
         should("return a 400 status code if the request has an amount less than or equal to zero") {
             testApplication {
                 application {
-                    module()
+                    module(Dependencies(mockk<PortfolioService>()))
                 }
                 val client = createClient {
                     install(ContentNegotiation) { json() }

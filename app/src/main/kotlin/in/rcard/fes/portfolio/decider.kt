@@ -6,10 +6,21 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import arrow.core.raise.withError
 import arrow.core.toNonEmptyListOrNull
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
+
+interface PortfolioService {
+    suspend fun handle(command: PortfolioCommand): Either<Union<EventStoreError, PortfolioError>, PortfolioId>
+}
+
+fun portfolioService(portfolioEventStore: PortfolioEventStore): PortfolioService =
+    object : PortfolioService {
+        override suspend fun handle(command: PortfolioCommand): Either<Union<EventStoreError, PortfolioError>, PortfolioId> =
+            handle(command)
+    }
 
 // TODO Put a limit on the recursion depth
 context (PortfolioEventStore)
-suspend fun handle(command: PortfolioCommand): Either<Union<PortfolioEventStore.EventStoreError, PortfolioError>, PortfolioId> =
+suspend fun handle(command: PortfolioCommand): Either<Union<EventStoreError, PortfolioError>, PortfolioId> =
     either {
         val (eTag, portfolio) = withError({ Union.First(it) }) { loadState(command.portfolioId).bind() }
         val events = withError({ Union.Second(it) }) { decide(command, portfolio).bind() }
@@ -17,7 +28,7 @@ suspend fun handle(command: PortfolioCommand): Either<Union<PortfolioEventStore.
         saveState(command.portfolioId, eTag, portfolio, newPortfolio).fold(
             {
                 when (it) {
-                    is PortfolioEventStore.EventStoreError.ConcurrentModificationError -> handle(command).bind()
+                    is EventStoreError.ConcurrentModificationError -> handle(command).bind()
                     else -> raise(Union.First(it))
                 }
             },

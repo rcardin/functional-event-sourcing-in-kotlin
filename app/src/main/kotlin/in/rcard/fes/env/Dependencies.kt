@@ -3,18 +3,20 @@ package `in`.rcard.fes.env
 import arrow.fx.coroutines.ResourceScope
 import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString
-import `in`.rcard.fes.portfolio.PortfolioEventStore
+import `in`.rcard.fes.portfolio.PortfolioService
 import `in`.rcard.fes.portfolio.portfolioEventStore
+import `in`.rcard.fes.portfolio.portfolioService
 import kotlinx.serialization.json.Json
 
-class Dependencies(val portfolioEventStore: PortfolioEventStore)
+class Dependencies(val portfolioService: PortfolioService)
 
 suspend fun ResourceScope.dependencies(env: Env): Dependencies {
     val eventStoreClient = eventStoreClient(env.eventStoreDataSource)
     val portfolioEventStore = with(jsonModule()) {
         portfolioEventStore(eventStoreClient)
     }
-    return Dependencies(portfolioEventStore)
+    val portfolioService = portfolioService(portfolioEventStore)
+    return Dependencies(portfolioService)
 }
 
 suspend fun ResourceScope.eventStoreClient(eventStoreDataSource: Env.EventStoreDataSource): EventStoreDBClient =

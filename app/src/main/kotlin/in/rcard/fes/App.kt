@@ -3,18 +3,26 @@
  */
 package `in`.rcard.fes
 
+import arrow.fx.coroutines.resourceScope
+import `in`.rcard.fes.env.Dependencies
+import `in`.rcard.fes.env.Env
 import `in`.rcard.fes.env.configure
+import `in`.rcard.fes.env.dependencies
 import `in`.rcard.fes.portfolio.configureRouting
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 
-fun main() {
-    embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
-        .start(wait = true)
+suspend fun main() {
+    val env = Env()
+    resourceScope {
+        val deps = dependencies(env)
+        embeddedServer(Netty, port = 8080, host = "0.0.0.0") { module(deps) }
+            .start(wait = true)
+    }
 }
 
-fun Application.module() {
+fun Application.module(deps: Dependencies) {
     configure()
-    configureRouting()
+    configureRouting(deps)
 }
