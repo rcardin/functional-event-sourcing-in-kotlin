@@ -36,4 +36,15 @@ fun Double.validAmount(): EitherNel<InvalidFieldError, Double> = if (this <= 0.0
     this.right()
 }
 
-data class InvalidFieldError(val field: String, val error: String)
+interface ValidationScope<T> {
+    fun T.validate(): EitherNel<InvalidFieldError, T>
+}
+
+val createPortfolioDTOValidator = object : ValidationScope<CreatePortfolioDTO> {
+    override fun CreatePortfolioDTO.validate(): EitherNel<InvalidFieldError, CreatePortfolioDTO> =
+        zipOrAccumulate(
+            userId.validUserId(),
+            amount.validAmount(),
+            ::CreatePortfolioDTO,
+        )
+}

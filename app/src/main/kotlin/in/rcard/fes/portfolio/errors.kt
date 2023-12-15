@@ -1,6 +1,10 @@
 package `in`.rcard.fes.portfolio
 
-sealed interface PortfolioError {
+sealed interface DomainError
+
+data class InvalidFieldError(val field: String, val error: String) : DomainError
+
+sealed interface PortfolioError : DomainError {
     val portfolioId: PortfolioId
 
     data class PortfolioAlreadyExists(override val portfolioId: PortfolioId) : PortfolioError
