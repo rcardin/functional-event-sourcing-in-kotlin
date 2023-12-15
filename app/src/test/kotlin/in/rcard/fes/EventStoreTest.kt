@@ -10,8 +10,8 @@ import `in`.rcard.eventstore.DockerContainerDatabase
 import `in`.rcard.fes.portfolio.Money
 import `in`.rcard.fes.portfolio.PortfolioEvent
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.UnknownStreamError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.LoadingError.UnknownStreamError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.SavingError.ConcurrentModificationError
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.Quantity
 import `in`.rcard.fes.portfolio.Stock
@@ -29,7 +29,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 private val NOW_MILLIS = Instant.now().toEpochMilli()
 

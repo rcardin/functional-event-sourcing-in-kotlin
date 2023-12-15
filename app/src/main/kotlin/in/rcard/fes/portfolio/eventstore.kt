@@ -16,9 +16,12 @@ import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioClosed
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
 import `in`.rcard.fes.portfolio.PortfolioEvent.StocksPurchased
 import `in`.rcard.fes.portfolio.PortfolioEvent.StocksSold
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.ConcurrentModificationError
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.StateSavingError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.LoadingError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.LoadingError.StateLoadingError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.LoadingError.UnknownStreamError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.SavingError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.SavingError.ConcurrentModificationError
+import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.SavingError.StateSavingError
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -29,21 +32,26 @@ typealias LoadedPortfolio = Pair<ETag, Portfolio>
 
 interface PortfolioEventStore {
 
-    suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio>
+    suspend fun loadState(portfolioId: PortfolioId): Either<LoadingError, LoadedPortfolio>
 
     suspend fun saveState(
         portfolioId: PortfolioId,
         eTag: ETag,
         oldPortfolio: Portfolio,
         newPortfolio: Portfolio,
-    ): Either<EventStoreError, PortfolioId>
+    ): Either<SavingError, PortfolioId>
 
     sealed interface EventStoreError {
 
-        data class UnknownStreamError(val portfolioId: PortfolioId) : EventStoreError
-        data class StateLoadingError(val portfolioId: PortfolioId) : EventStoreError
-        data class ConcurrentModificationError(val portfolioId: PortfolioId) : EventStoreError
-        data class StateSavingError(val portfolioId: PortfolioId) : EventStoreError
+        sealed interface LoadingError : EventStoreError {
+            data class UnknownStreamError(val portfolioId: PortfolioId) : LoadingError
+            data class StateLoadingError(val portfolioId: PortfolioId) : LoadingError
+        }
+
+        sealed interface SavingError : EventStoreError {
+            data class ConcurrentModificationError(val portfolioId: PortfolioId) : SavingError
+            data class StateSavingError(val portfolioId: PortfolioId) : SavingError
+        }
     }
 }
 
@@ -51,7 +59,7 @@ context (Json)
 fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventStore =
     object : PortfolioEventStore {
 
-        override suspend fun loadState(portfolioId: PortfolioId): Either<EventStoreError, LoadedPortfolio> = either {
+        override suspend fun loadState(portfolioId: PortfolioId): Either<LoadingError, LoadedPortfolio> = either {
             val options = ReadStreamOptions.get()
                 .forwards()
                 .fromStart()
@@ -63,8 +71,8 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
                 (eTag to loadedEvents)
             }) { error: Throwable ->
                 when (error) {
-                    is StreamNotFoundException -> raise(EventStoreError.UnknownStreamError(portfolioId))
-                    else -> raise(EventStoreError.StateLoadingError(portfolioId))
+                    is StreamNotFoundException -> raise(UnknownStreamError(portfolioId))
+                    else -> raise(StateLoadingError(portfolioId))
                 }
             }
         }
@@ -77,7 +85,7 @@ fun portfolioEventStore(eventStoreClient: EventStoreDBClient): PortfolioEventSto
             eTag: ETag,
             oldPortfolio: Portfolio,
             newPortfolio: Portfolio,
-        ): Either<EventStoreError, PortfolioId> = either {
+        ): Either<SavingError, PortfolioId> = either {
             val eventsToPersist = newPortfolio - oldPortfolio
 
             val appendToStreamOptions: AppendToStreamOptions = AppendToStreamOptions.get().let { options ->

@@ -5,6 +5,7 @@ import arrow.core.EitherNel
 import arrow.core.left
 import arrow.core.nonEmptyListOf
 import arrow.core.right
+import `in`.rcard.fes.portfolio.ValidationError.InvalidFieldError
 import io.ktor.server.plugins.requestvalidation.RequestValidationConfig
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 

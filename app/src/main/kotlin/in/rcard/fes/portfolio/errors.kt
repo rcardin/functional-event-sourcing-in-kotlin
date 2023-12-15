@@ -2,7 +2,9 @@ package `in`.rcard.fes.portfolio
 
 sealed interface DomainError
 
-data class InvalidFieldError(val field: String, val error: String) : DomainError
+sealed interface ValidationError : DomainError {
+    data class InvalidFieldError(val field: String, val error: String) : ValidationError
+}
 
 sealed interface PortfolioError : DomainError {
     val portfolioId: PortfolioId
@@ -24,4 +26,8 @@ sealed interface PortfolioError : DomainError {
 
     data class PortfolioIsClosed(override val portfolioId: PortfolioId) : PortfolioError
     data class PriceNotAvailable(override val portfolioId: PortfolioId, val stock: Stock) : PortfolioError
+}
+
+sealed interface InfrastructureError : DomainError {
+    data object PersistenceError : InfrastructureError
 }
