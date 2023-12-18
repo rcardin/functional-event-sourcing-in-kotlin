@@ -18,20 +18,28 @@ import kotlinx.serialization.Serializable
 fun Application.configureRouting(deps: Dependencies) {
     routing {
         with(createPortfolioDTOValidator) {
-            portfolioRoutes(deps.portfolioService)
+            portfolioRoutes(deps.createPortfolioUseCase)
         }
     }
 }
 
 context (ValidationScope<CreatePortfolioDTO>)
-fun Route.portfolioRoutes(portfolioService: PortfolioService) {
+fun Route.portfolioRoutes(createPortfolioUseCase: CreatePortfolioUseCase) {
     post("/portfolios") {
         either {
             val dto = call.validate<CreatePortfolioDTO>().bind()
-            call.response.header("Location", "/portfolios/1")
+            val model = dto.toModel()
+            val portfolioId = createPortfolioUseCase.createPortfolio(model).bind()
+            call.response.header("Location", "/portfolios/${portfolioId.id}")
         }.respond(HttpStatusCode.Created)
     }
 }
+
+private fun CreatePortfolioDTO.toModel(): CreatePortfolio =
+    CreatePortfolio(
+        UserId(userId),
+        Money(amount)
+    )
 
 @Serializable
 data class CreatePortfolioDTO(val userId: String, val amount: Double)
