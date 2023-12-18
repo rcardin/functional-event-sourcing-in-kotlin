@@ -1,17 +1,17 @@
 package `in`.rcard.fes.portfolio
 
 import arrow.core.Either
-import java.util.*
+import `in`.rcard.fes.env.UUIDGenerator
 
 interface CreatePortfolioUseCase {
     suspend fun createPortfolio(model: CreatePortfolio): Either<DomainError, PortfolioId>
 }
 
+context(UUIDGenerator)
 fun createPortfolioUseCase(portfolioService: PortfolioService) = object : CreatePortfolioUseCase {
     override suspend fun createPortfolio(model: CreatePortfolio): Either<DomainError, PortfolioId> =
         PortfolioCommand.CreatePortfolio(
-            // TODO Move this away from here
-            PortfolioId(UUID.randomUUID().toString()),
+            PortfolioId(uuid()),
             System.currentTimeMillis(),
             model.userId,
             model.amount,

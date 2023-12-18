@@ -7,6 +7,7 @@ import `in`.rcard.fes.portfolio.CreatePortfolioUseCase
 import `in`.rcard.fes.portfolio.createPortfolioUseCase
 import `in`.rcard.fes.portfolio.portfolioEventStore
 import `in`.rcard.fes.portfolio.portfolioService
+import java.util.*
 import kotlinx.serialization.json.Json
 
 class Dependencies(val createPortfolioUseCase: CreatePortfolioUseCase)
@@ -17,7 +18,9 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
         portfolioEventStore(eventStoreClient)
     }
     val portfolioService = portfolioService(portfolioEventStore)
-    val createPortfolioUseCase = createPortfolioUseCase(portfolioService)
+    val createPortfolioUseCase = with(uuidGenerator()) {
+        createPortfolioUseCase(portfolioService)
+    }
     return Dependencies(createPortfolioUseCase)
 }
 
@@ -30,3 +33,11 @@ suspend fun ResourceScope.eventStoreClient(eventStoreDataSource: Env.EventStoreD
     }
 
 fun jsonModule() = Json
+
+interface UUIDGenerator {
+    suspend fun uuid(): String
+}
+
+fun uuidGenerator() = object : UUIDGenerator {
+    override suspend fun uuid(): String = UUID.randomUUID().toString()
+}
