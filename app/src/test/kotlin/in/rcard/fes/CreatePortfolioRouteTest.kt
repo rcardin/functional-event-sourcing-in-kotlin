@@ -51,7 +51,7 @@ class CreatePortfolioRouteTest : ShouldSpec({
                     setBody(CreatePortfolioDTO("", 100.0))
                 }
                 response.shouldHaveStatus(400)
-                response.bodyAsText().shouldBe("InvalidFieldError(field=userId, error=The userId cannot be empty)")
+                response.bodyAsText().shouldBe("{\"errors\":[\"Field 'userId' is required\"]}")
             }
         }
         should("return a 400 status code if the request has an amount less than or equal to zero") {
@@ -68,7 +68,7 @@ class CreatePortfolioRouteTest : ShouldSpec({
                     setBody(CreatePortfolioDTO("rcardin", -1.0))
                 }
                 response.shouldHaveStatus(400)
-                response.bodyAsText().shouldBe("InvalidFieldError(field=amount, error=The amount cannot be negative or zero)")
+                response.bodyAsText().shouldBe("{\"errors\":[\"Field 'amount' must be positive\"]}")
             }
         }
     }

@@ -1,10 +1,10 @@
 package `in`.rcard.fes.portfolio
 
+import arrow.core.NonEmptyList
+
 sealed interface DomainError
 
-sealed interface ValidationError : DomainError {
-    data class InvalidFieldError(val field: String, val error: String) : ValidationError
-}
+data class ValidationError(val fieldErrors: NonEmptyList<InvalidFieldError>) : DomainError
 
 sealed interface PortfolioError : DomainError {
     val portfolioId: PortfolioId

@@ -1,15 +1,12 @@
 package `in`.rcard.fes.portfolio
 
 import arrow.core.Either
-import arrow.core.EitherNel
-import arrow.core.NonEmptyList
 import arrow.core.raise.either
 import `in`.rcard.fes.env.Dependencies
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
-import io.ktor.server.request.receive
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -40,15 +37,13 @@ fun Route.portfolioRoutes(portfolioService: PortfolioService) {
 data class CreatePortfolioDTO(val userId: String, val amount: Double)
 
 context(PipelineContext<Unit, ApplicationCall>)
-suspend inline fun <reified A : Any> EitherNel<DomainError, A>.respond(status: HttpStatusCode): Unit =
+suspend inline fun <reified A : Any> Either<DomainError, A>.respond(status: HttpStatusCode): Unit =
     when (this) {
         is Either.Left -> respond(value)
         is Either.Right -> call.respond(status, value)
     }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.respond(error: NonEmptyList<DomainError>): Unit =
-    call.respond(HttpStatusCode.BadRequest)
-
-context (ValidationScope<T>)
-suspend inline fun <reified T : Any> ApplicationCall.validate(): EitherNel<DomainError, T> =
-    receive<T>().validate()
+suspend fun PipelineContext<Unit, ApplicationCall>.respond(error: DomainError): Unit = when (error) {
+    is ValidationError -> call.respond(HttpStatusCode.BadRequest, error.toGenericError())
+    else -> call.respond(HttpStatusCode.InternalServerError)
+}
