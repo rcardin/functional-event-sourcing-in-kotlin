@@ -34,4 +34,11 @@ The project uses the following technologies:
 - [Mockk](https://mockk.io/)
 - [Ktlint](https://ktlint.github.io/)
 
+## References
+
+The project is heavily inspired by the following resources:
+
+- [Functional Event Sourcing Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider)
+- [Event sourcing Series' Articles](https://dev.to/jakub_zalas/series/25345)
+
 
