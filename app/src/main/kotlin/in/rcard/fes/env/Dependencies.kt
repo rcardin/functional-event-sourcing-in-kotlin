@@ -19,7 +19,9 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
     }
     val portfolioService = portfolioService(portfolioEventStore)
     val createPortfolioUseCase = with(uuidGenerator()) {
-        createPortfolioUseCase(portfolioService)
+        with(clock()) {
+            createPortfolioUseCase(portfolioService)
+        }
     }
     return Dependencies(createPortfolioUseCase)
 }
@@ -40,4 +42,12 @@ interface UUIDGenerator {
 
 fun uuidGenerator() = object : UUIDGenerator {
     override suspend fun uuid(): String = UUID.randomUUID().toString()
+}
+
+interface Clock {
+    suspend fun currentTimeMillis(): Long
+}
+
+fun clock() = object : Clock {
+    override suspend fun currentTimeMillis(): Long = System.currentTimeMillis()
 }
