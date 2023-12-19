@@ -38,7 +38,7 @@ The project uses the following technologies:
 
 The project is heavily inspired by the following resources:
 
-- [Functional Event Sourcing Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider)
-- [Event sourcing Series' Articles](https://dev.to/jakub_zalas/series/25345)
+- [Functional Event Sourcing Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) by Jeremie Chassaing
+- [Event sourcing Series' Articles](https://dev.to/jakub_zalas/series/25345) by Jakub Zalas
 
 
