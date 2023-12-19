@@ -21,4 +21,17 @@ The following diagram shows the domain model of the system. The model is based o
 
 <img src="./portfolio-event-storming.png"  width="800"  alt="Event Storming for the Portfolio Domain"/>
 
+## Technology Stack
+
+The project uses the following technologies:
+
+- Kotlin
+- [Arrow Kt](https://arrow-kt.io/)
+- [Ktor](https://ktor.io/)
+- [EventStoreDB](https://eventstore.com/)
+- [Kotest](https://kotest.io/)
+- [Testcontainers](https://www.testcontainers.org/)
+- [Mockk](https://mockk.io/)
+- [Ktlint](https://ktlint.github.io/)
+
 
