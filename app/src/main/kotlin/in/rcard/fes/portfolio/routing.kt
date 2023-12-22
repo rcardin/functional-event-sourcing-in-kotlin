@@ -10,7 +10,9 @@ import io.ktor.server.application.call
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.routing
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.serialization.Serializable
@@ -33,7 +35,16 @@ fun Route.portfolioRoutes(createPortfolioUseCase: CreatePortfolioUseCase) {
             call.response.header("Location", "/portfolios/${portfolioId.id}")
         }.respond(HttpStatusCode.Created)
     }
+    put("/portfolio/{portfolioId}") {
+        call.respond(HttpStatusCode.NotImplemented)
+    }
+    delete("/portfolio/{portfolioId}") {
+        call.respond(HttpStatusCode.NotImplemented)
+    }
 }
+
+@Serializable
+data class CreatePortfolioDTO(val userId: String, val amount: Double)
 
 private fun CreatePortfolioDTO.toModel(): CreatePortfolio =
     CreatePortfolio(
@@ -42,7 +53,7 @@ private fun CreatePortfolioDTO.toModel(): CreatePortfolio =
     )
 
 @Serializable
-data class CreatePortfolioDTO(val userId: String, val amount: Double)
+data class ChangePortfolioDTO(val stock: String, val quantity: Int)
 
 context(PipelineContext<Unit, ApplicationCall>)
 suspend inline fun <reified A : Any> Either<DomainError, A>.respond(status: HttpStatusCode): Unit =
