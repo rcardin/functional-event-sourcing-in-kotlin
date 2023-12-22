@@ -20,12 +20,13 @@ interface PortfolioService {
 fun portfolioService(portfolioEventStore: PortfolioEventStore): PortfolioService =
     object : PortfolioService {
         override suspend fun handle(command: PortfolioCommand): Either<DomainError, PortfolioId> =
-            handle(command)
+            with(portfolioEventStore) {
+                handle(command)
+            }
     }
 
 // TODO Put a limit on the recursion depth
-context (PortfolioEventStore)
-suspend fun handle(command: PortfolioCommand): Either<DomainError, PortfolioId> =
+suspend fun PortfolioEventStore.handle(command: PortfolioCommand): Either<DomainError, PortfolioId> =
     either {
         val (eTag, portfolio) = withError({
             when (it) {
