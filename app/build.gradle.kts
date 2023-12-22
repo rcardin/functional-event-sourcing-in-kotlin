@@ -49,6 +49,8 @@ dependencies {
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     implementation("io.arrow-kt:arrow-core:1.2.1")
     implementation("io.arrow-kt:arrow-fx-coroutines:1.2.1")
+    implementation("io.arrow-kt:suspendapp:0.4.0")
+    implementation("io.arrow-kt:suspendapp-ktor:0.4.0")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
