@@ -19,7 +19,7 @@ suspend fun main() = SuspendApp {
     val env = Env()
     resourceScope {
         val deps = dependencies(env)
-        server(Netty, port = 8080, host = "0.0.0.0") { module(deps) }
+        server(Netty, port = env.http.port, host = env.http.host) { module(deps) }
         awaitCancellation()
     }
 }
