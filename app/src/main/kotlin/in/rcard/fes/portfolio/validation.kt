@@ -35,35 +35,41 @@ interface ValidationScope<T> {
     fun T.validate(): Either<ValidationError, T>
 }
 
-interface Required<T> {
-    fun T.required(fieldName: String): EitherNel<RequiredFieldError, T>
-}
-
-interface Positive<T : Number> {
-    fun T.positive(fieldName: String): EitherNel<NegativeFieldError, T>
-}
-
-val requiredString = object : Required<String> {
-    override fun String.required(fieldName: String): EitherNel<RequiredFieldError, String> =
-        if (this.isBlank()) {
-            RequiredFieldError(fieldName).left().toEitherNel()
-        } else {
-            this.right()
-        }
-}
-
-val positiveDouble = object : Positive<Double> {
-    override fun Double.positive(fieldName: String): EitherNel<NegativeFieldError, Double> =
-        if (this <= 0.0) {
-            NegativeFieldError(fieldName).left().toEitherNel()
-        } else {
-            this.right()
-        }
-}
-
 context (ValidationScope<T>)
 suspend inline fun <reified T : Any> ApplicationCall.validate(): Either<ValidationError, T> =
     receive<T>().validate()
+
+interface Required<T> {
+    fun T.required(): Boolean
+}
+
+interface Positive<T : Number> {
+    fun T.positive(): Boolean
+}
+
+val requiredString = object : Required<String> {
+    override fun String.required(): Boolean = this.isNotBlank()
+}
+
+val positiveDouble = object : Positive<Double> {
+    override fun Double.positive(): Boolean = this > 0.0
+}
+
+context(Required<T>)
+fun <T> T.required(fieldName: String): EitherNel<RequiredFieldError, T> =
+    if (required()) {
+        this.right()
+    } else {
+        RequiredFieldError(fieldName).left().toEitherNel()
+    }
+
+context(Positive<T>)
+fun <T : Number> T.positive(fieldName: String): EitherNel<NegativeFieldError, T> =
+    if (this.positive()) {
+        this.right()
+    } else {
+        NegativeFieldError(fieldName).left().toEitherNel()
+    }
 
 val createPortfolioDTOValidator = object : ValidationScope<CreatePortfolioDTO> {
     override fun CreatePortfolioDTO.validate(): Either<ValidationError, CreatePortfolioDTO> =
@@ -77,3 +83,4 @@ val createPortfolioDTOValidator = object : ValidationScope<CreatePortfolioDTO> {
             }
         }
 }
+
