@@ -4,7 +4,6 @@ import arrow.core.Either
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
-import arrow.core.raise.withError
 import arrow.core.toNonEmptyListOrNull
 import `in`.rcard.fes.portfolio.InfrastructureError.PersistenceError
 import `in`.rcard.fes.portfolio.PortfolioError.PortfolioNotAvailable
@@ -28,12 +27,12 @@ fun portfolioService(portfolioEventStore: PortfolioEventStore): PortfolioService
 // TODO Put a limit on the recursion depth
 suspend fun PortfolioEventStore.handle(command: PortfolioCommand): Either<DomainError, PortfolioId> =
     either {
-        val (eTag, portfolio) = withError({
+        val (eTag, portfolio) = loadState(command.portfolioId).mapLeft {
             when (it) {
                 is UnknownStreamError -> PortfolioNotAvailable(it.portfolioId)
                 is StateLoadingError -> PersistenceError
             }
-        }) { loadState(command.portfolioId).bind() }
+        }.bind()
         val events = decide(command, portfolio).bind()
         val newPortfolio = events.fold(portfolio) { currentPortfolio, event -> evolve(currentPortfolio, event) }
         saveState(command.portfolioId, eTag, portfolio, newPortfolio).fold(
