@@ -19,23 +19,28 @@ import kotlinx.serialization.Serializable
 
 fun Application.configureRouting(deps: Dependencies) {
     routing {
-        with(createPortfolioDTOValidator) {
-            portfolioRoutes(deps.createPortfolioUseCase)
-        }
+        portfolioRoutes(deps.createPortfolioUseCase)
     }
 }
 
-context (ValidationScope<CreatePortfolioDTO>)
 fun Route.portfolioRoutes(createPortfolioUseCase: CreatePortfolioUseCase) {
     post("/portfolios") {
-        either {
-            val dto = call.validate<CreatePortfolioDTO>().bind()
-            val model = dto.toModel()
-            val portfolioId = createPortfolioUseCase.createPortfolio(model).bind()
-            call.response.header("Location", "/portfolios/${portfolioId.id}")
-        }.respond(HttpStatusCode.Created)
+        with(createPortfolioDTOValidator) {
+            either {
+                val dto = call.validate<CreatePortfolioDTO>().bind()
+                val model = dto.toModel()
+                val portfolioId = createPortfolioUseCase.createPortfolio(model).bind()
+                call.response.header("Location", "/portfolios/${portfolioId.id}")
+            }.respond(HttpStatusCode.Created)
+        }
     }
     put("/portfolio/{portfolioId}") {
+        with (changePortfolioDTOValidator) {
+            either {
+                val dto = call.validate<ChangePortfolioDTO>().bind()
+                // val model = dto.toModel()
+            }.respond(HttpStatusCode.NoContent)
+        }
         call.respond(HttpStatusCode.NotImplemented)
     }
     delete("/portfolio/{portfolioId}") {
