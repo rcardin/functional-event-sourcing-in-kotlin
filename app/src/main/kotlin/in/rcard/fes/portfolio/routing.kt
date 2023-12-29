@@ -1,6 +1,7 @@
 package `in`.rcard.fes.portfolio
 
 import arrow.core.Either
+import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import `in`.rcard.fes.env.Dependencies
 import io.ktor.http.HttpStatusCode
@@ -40,9 +41,17 @@ fun Route.portfolioRoutes(
     put("/portfolios/{portfolioId}") {
         with(changePortfolioDTOValidator) {
             either {
-                val portfolioId = call.parameters["portfolioId"]
+                val portfolioId = call.parameters["portfolioId"] ?: raise(
+                    ValidationError(
+                        nonEmptyListOf(
+                            InvalidFieldError.MissingFieldError(
+                                "portfolioId"
+                            )
+                        )
+                    )
+                )
                 val dto = call.validate<ChangePortfolioDTO>().bind()
-                val model = dto.toModel(portfolioId!!) // FIXME
+                val model = dto.toModel(portfolioId)
                 changePortfolioUseCase.changePortfolio(model).bind()
             }.respond(HttpStatusCode.NoContent)
         }
