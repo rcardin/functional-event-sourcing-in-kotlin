@@ -29,7 +29,7 @@ The project uses the following technologies:
 - [Arrow Kt](https://arrow-kt.io/)
 - [Ktor](https://ktor.io/)
 - [EventStoreDB](https://eventstore.com/)
-- [SQLDelight](https://cashapp.github.io/sqldelight/)
+- [SQLDelight](https://cashapp.github.io/sqldelight/) (WIP)
 - [Kotest](https://kotest.io/)
 - [Testcontainers](https://www.testcontainers.org/)
 - [Mockk](https://mockk.io/)
