@@ -13,7 +13,7 @@ plugins {
     id("java")
     id("io.ktor.plugin") version "2.3.6"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.20"
-
+    id("app.cash.sqldelight") version "2.0.1"
     // Apply the application plugin to add support for building a CLI application in Java.
     application
 }
@@ -46,6 +46,7 @@ dependencies {
         exclude(group = "com.google.guava", module = "guava")
     }
     testImplementation("org.testcontainers:testcontainers:1.19.1")
+    testImplementation("org.testcontainers:postgresql:1.19.1")
     testImplementation("io.kotest.extensions:kotest-extensions-testcontainers:2.0.2")
     implementation("io.arrow-kt:arrow-core:1.2.1")
     implementation("io.arrow-kt:arrow-fx-coroutines:1.2.1")
@@ -57,6 +58,10 @@ dependencies {
     implementation("io.ktor:ktor-server-netty-jvm")
     implementation("ch.qos.logback:logback-classic:1.4.11")
     implementation("com.eventstore:db-client-java:5.2.0")
+    implementation("com.zaxxer:HikariCP:5.0.1")
+    implementation("app.cash.sqldelight:jdbc-driver:2.0.1")
+    implementation("app.cash.sqldelight:postgresql-dialect:2.0.1")
+    implementation("org.postgresql:postgresql:42.6.0")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -82,5 +87,15 @@ tasks.named<Test>("test") {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions {
         freeCompilerArgs = freeCompilerArgs + "-Xcontext-receivers"
+    }
+}
+
+
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("in.rcard.fes.stock")
+            dialect("app.cash.sqldelight:postgresql-dialect:2.0.1")
+        }
     }
 }
