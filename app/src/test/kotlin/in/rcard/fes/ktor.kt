@@ -1,6 +1,7 @@
 package `in`.rcard.fes
 
 import `in`.rcard.fes.env.Dependencies
+import `in`.rcard.fes.portfolio.ChangePortfolioUseCase
 import `in`.rcard.fes.portfolio.CreatePortfolioUseCase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -9,7 +10,7 @@ import io.ktor.server.testing.testApplication
 import io.mockk.mockk
 
 suspend fun withServer(testSuite: suspend HttpClient.(dep: Dependencies) -> Unit) {
-    val deps = Dependencies(mockk<CreatePortfolioUseCase>())
+    val deps = Dependencies(mockk<CreatePortfolioUseCase>(), mockk<ChangePortfolioUseCase>())
     testApplication {
         application {
             module(deps)

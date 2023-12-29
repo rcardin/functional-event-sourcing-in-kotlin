@@ -19,11 +19,14 @@ import kotlinx.serialization.Serializable
 
 fun Application.configureRouting(deps: Dependencies) {
     routing {
-        portfolioRoutes(deps.createPortfolioUseCase)
+        portfolioRoutes(deps.createPortfolioUseCase, deps.changePortfolioUseCase)
     }
 }
 
-fun Route.portfolioRoutes(createPortfolioUseCase: CreatePortfolioUseCase) {
+fun Route.portfolioRoutes(
+    createPortfolioUseCase: CreatePortfolioUseCase,
+    changePortfolioUseCase: ChangePortfolioUseCase
+) {
     post("/portfolios") {
         with(createPortfolioDTOValidator) {
             either {
@@ -35,11 +38,12 @@ fun Route.portfolioRoutes(createPortfolioUseCase: CreatePortfolioUseCase) {
         }
     }
     put("/portfolios/{portfolioId}") {
-        with (changePortfolioDTOValidator) {
+        with(changePortfolioDTOValidator) {
             either {
                 val portfolioId = call.parameters["portfolioId"]
                 val dto = call.validate<ChangePortfolioDTO>().bind()
-                // val model = dto.toModel()
+                val model = dto.toModel(portfolioId!!) // FIXME
+                changePortfolioUseCase.changePortfolio(model).bind()
             }.respond(HttpStatusCode.NoContent)
         }
         call.respond(HttpStatusCode.NotImplemented)
@@ -60,6 +64,13 @@ private fun CreatePortfolioDTO.toModel(): CreatePortfolio =
 
 @Serializable
 data class ChangePortfolioDTO(val stock: String, val quantity: Int)
+
+private fun ChangePortfolioDTO.toModel(portfolioId: String): ChangePortfolio =
+    ChangePortfolio(
+        PortfolioId(portfolioId),
+        Stock(stock),
+        Quantity(quantity)
+    )
 
 context(PipelineContext<Unit, ApplicationCall>)
 suspend inline fun <reified A : Any> Either<DomainError, A>.respond(status: HttpStatusCode): Unit =

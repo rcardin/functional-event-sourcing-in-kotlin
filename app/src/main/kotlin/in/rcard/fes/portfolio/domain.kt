@@ -115,4 +115,12 @@ value class Quantity(val amount: Int) {
             else -> 0
         }
     }
+
+    operator fun compareTo(quantity: Int): Int {
+        return when {
+            this.amount > quantity -> 1
+            this.amount < quantity -> -1
+            else -> 0
+        }
+    }
 }
