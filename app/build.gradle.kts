@@ -71,6 +71,10 @@ java {
     }
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 application {
     // Define the main class for the application.
     mainClass.set("in.rcard.fes.AppKt")
