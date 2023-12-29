@@ -34,9 +34,10 @@ fun Route.portfolioRoutes(createPortfolioUseCase: CreatePortfolioUseCase) {
             }.respond(HttpStatusCode.Created)
         }
     }
-    put("/portfolio/{portfolioId}") {
+    put("/portfolios/{portfolioId}") {
         with (changePortfolioDTOValidator) {
             either {
+                val portfolioId = call.parameters["portfolioId"]
                 val dto = call.validate<ChangePortfolioDTO>().bind()
                 // val model = dto.toModel()
             }.respond(HttpStatusCode.NoContent)
