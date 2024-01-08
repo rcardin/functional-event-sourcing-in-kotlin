@@ -98,7 +98,7 @@ tasks.withType<KotlinCompile>().configureEach {
 sqldelight {
     databases {
         create("Database") {
-            packageName.set("in.rcard.fes.stock")
+            packageName = "in.rcard.fes.sqldelight"
             dialect("app.cash.sqldelight:postgresql-dialect:2.0.1")
         }
     }
