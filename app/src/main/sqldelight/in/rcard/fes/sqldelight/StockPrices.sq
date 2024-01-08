@@ -1,7 +1,7 @@
 import in.rcard.fes.portfolio.Money;
 import in.rcard.fes.portfolio.Stock;
 
-CREATE TABLE IF NOT EXISTS stock_prices  (
+CREATE TABLE IF NOT EXISTS stockPrices (
     stock_id VARCHAR(10) AS Stock PRIMARY KEY,
     price DECIMAL(10, 2) AS Money
 );
