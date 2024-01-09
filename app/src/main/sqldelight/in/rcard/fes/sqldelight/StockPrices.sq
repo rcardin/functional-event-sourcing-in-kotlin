@@ -5,3 +5,6 @@ CREATE TABLE IF NOT EXISTS stockPrices (
     stock_id VARCHAR(10) AS Stock PRIMARY KEY,
     price DECIMAL(10, 2) AS Money
 );
+
+findPriceByStockId:
+SELECT price FROM stockPrices WHERE stock_id = :stockId;

@@ -9,5 +9,5 @@ sealed interface StockError {
 }
 
 interface FindStockBySymbol {
-    suspend fun findStockBySymbol(symbol: String): Either<StockError, Pair<Stock, Money>?>
+    suspend fun findPriceBySymbol(symbol: Stock): Either<StockError, Money?>
 }
