@@ -1,11 +1,7 @@
-package `in`.rcard.fes
+package `in`.rcard.fes.portfolio
 
 import arrow.core.right
-import `in`.rcard.fes.portfolio.ChangePortfolio
-import `in`.rcard.fes.portfolio.ChangePortfolioDTO
-import `in`.rcard.fes.portfolio.PortfolioId
-import `in`.rcard.fes.portfolio.Quantity
-import `in`.rcard.fes.portfolio.Stock
+import `in`.rcard.fes.withServer
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
@@ -26,26 +22,28 @@ class ChangePortfolioRouteTest : ShouldSpec({
                         ChangePortfolio(
                             PortfolioId("1"),
                             Stock("AAPL"),
-                            Quantity(100)
-                        )
+                            Quantity(100),
+                        ),
                     )
                 } returns PortfolioId("1").right()
-                val response = put {
-                    url("/portfolios/1")
-                    contentType(ContentType.Application.Json)
-                    setBody(ChangePortfolioDTO("AAPL", 100))
-                }
+                val response =
+                    put {
+                        url("/portfolios/1")
+                        contentType(ContentType.Application.Json)
+                        setBody(ChangePortfolioDTO("AAPL", 100))
+                    }
                 response.shouldHaveStatus(204)
             }
         }
 
         should("return a 400 status if the quantity is zero") {
             withServer {
-                val response = put {
-                    url("/portfolios/1")
-                    contentType(ContentType.Application.Json)
-                    setBody(ChangePortfolioDTO("AAPL", 0))
-                }
+                val response =
+                    put {
+                        url("/portfolios/1")
+                        contentType(ContentType.Application.Json)
+                        setBody(ChangePortfolioDTO("AAPL", 0))
+                    }
                 response.shouldHaveStatus(400)
                 response.bodyAsText().shouldBe("{\"errors\":[\"Field 'quantity' must be non zero\"]}")
             }
@@ -53,11 +51,12 @@ class ChangePortfolioRouteTest : ShouldSpec({
 
         should("return a 400 status if the stock name is empty") {
             withServer {
-                val response = put {
-                    url("/portfolios/1")
-                    contentType(ContentType.Application.Json)
-                    setBody(ChangePortfolioDTO("", 100))
-                }
+                val response =
+                    put {
+                        url("/portfolios/1")
+                        contentType(ContentType.Application.Json)
+                        setBody(ChangePortfolioDTO("", 100))
+                    }
                 response.shouldHaveStatus(400)
                 response.bodyAsText().shouldBe("{\"errors\":[\"Field 'stock' is required\"]}")
             }

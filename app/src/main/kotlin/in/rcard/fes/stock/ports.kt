@@ -9,6 +9,8 @@ import `in`.rcard.fes.sqldelight.StockPricesQueries
 import `in`.rcard.fes.stock.StockPricesError.StockPricesGenericError
 
 sealed interface StockPricesError {
+    data class StockPricesNotFoundError(val stock: Stock) : StockPricesError
+
     data object StockPricesGenericError : StockPricesError
 }
 
@@ -19,10 +21,12 @@ interface FindStockPriceBySymbol {
 
 fun stockPricesRepository(stockPricesQueries: StockPricesQueries): FindStockPriceBySymbol =
     object : FindStockPriceBySymbol {
-        override suspend fun findPriceBySymbol(symbol: Stock): Either<StockPricesError, Money?> =
+        override suspend fun findPriceBySymbol(symbol: Stock): Either<StockPricesError, Money> =
             either {
                 catch({
-                    stockPricesQueries.findPriceByStockId(symbol).executeAsOneOrNull()?.price
+                    stockPricesQueries.findPriceByStockId(symbol).executeAsOneOrNull()?.price ?: raise(
+                        StockPricesError.StockPricesNotFoundError(symbol),
+                    )
                 }) {
                     raise(StockPricesGenericError)
                 }

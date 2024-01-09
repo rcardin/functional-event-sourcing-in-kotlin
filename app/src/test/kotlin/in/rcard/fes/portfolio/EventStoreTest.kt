@@ -1,4 +1,4 @@
-package `in`.rcard.fes
+package `in`.rcard.fes.portfolio
 
 import arrow.core.nonEmptyListOf
 import com.eventstore.dbclient.AppendToStreamOptions
@@ -7,18 +7,6 @@ import com.eventstore.dbclient.ExpectedRevision
 import com.eventstore.dbclient.ReadResult
 import com.eventstore.dbclient.ReadStreamOptions
 import `in`.rcard.eventstore.DockerContainerDatabase
-import `in`.rcard.fes.portfolio.Money
-import `in`.rcard.fes.portfolio.PortfolioEvent
-import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.LoadingError.UnknownStreamError
-import `in`.rcard.fes.portfolio.PortfolioEventStore.EventStoreError.SavingError.ConcurrentModificationError
-import `in`.rcard.fes.portfolio.PortfolioId
-import `in`.rcard.fes.portfolio.Quantity
-import `in`.rcard.fes.portfolio.Stock
-import `in`.rcard.fes.portfolio.UserId
-import `in`.rcard.fes.portfolio.eventType
-import `in`.rcard.fes.portfolio.notCreatedPortfolio
-import `in`.rcard.fes.portfolio.portfolioEventStore
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.extensions.install
@@ -36,14 +24,15 @@ private val NOW_MILLIS = Instant.now().toEpochMilli()
 class EventStoreTest : ShouldSpec({
     context("The event store module") {
         should("write event stream to the event store") {
-            val eventStoreDb = install(
-                ContainerExtension(
-                    DockerContainerDatabase(
-                        DockerContainerDatabase.Builder().version("latest")
-                            .secure(false),
+            val eventStoreDb =
+                install(
+                    ContainerExtension(
+                        DockerContainerDatabase(
+                            DockerContainerDatabase.Builder().version("latest")
+                                .secure(false),
+                        ),
                     ),
-                ),
-            )
+                )
             val eventStoreDBClient = eventStoreDb.defaultClient()
             with(Json) {
                 val portfolioEventStore = portfolioEventStore(eventStoreDBClient)
@@ -52,7 +41,7 @@ class EventStoreTest : ShouldSpec({
                     -1L,
                     notCreatedPortfolio,
                     nonEmptyListOf(
-                        PortfolioCreated(
+                        PortfolioEvent.PortfolioCreated(
                             PortfolioId("1"),
                             NOW_MILLIS,
                             UserId("rcardin"),
@@ -66,7 +55,7 @@ class EventStoreTest : ShouldSpec({
                     decodeFromString<PortfolioEvent>(it.originalEvent.eventData.decodeToString())
                 }
                     .shouldContainExactly(
-                        PortfolioCreated(
+                        PortfolioEvent.PortfolioCreated(
                             PortfolioId("1"),
                             NOW_MILLIS,
                             UserId("rcardin"),
@@ -77,14 +66,15 @@ class EventStoreTest : ShouldSpec({
         }
 
         should("return a ConcurrentModificationError in case of concurrent modification of the stream") {
-            val eventStoreDb = install(
-                ContainerExtension(
-                    DockerContainerDatabase(
-                        DockerContainerDatabase.Builder().version("latest")
-                            .secure(false),
+            val eventStoreDb =
+                install(
+                    ContainerExtension(
+                        DockerContainerDatabase(
+                            DockerContainerDatabase.Builder().version("latest")
+                                .secure(false),
+                        ),
                     ),
-                ),
-            )
+                )
             val eventStoreDBClient = eventStoreDb.defaultClient()
             with(Json) {
                 val portfolioEventStore = portfolioEventStore(eventStoreDBClient)
@@ -93,7 +83,7 @@ class EventStoreTest : ShouldSpec({
                     -1L,
                     notCreatedPortfolio,
                     nonEmptyListOf(
-                        PortfolioCreated(
+                        PortfolioEvent.PortfolioCreated(
                             PortfolioId("1"),
                             NOW_MILLIS,
                             UserId("rcardin"),
@@ -107,53 +97,60 @@ class EventStoreTest : ShouldSpec({
                     -1L,
                     notCreatedPortfolio,
                     nonEmptyListOf(
-                        PortfolioCreated(
+                        PortfolioEvent.PortfolioCreated(
                             PortfolioId("1"),
                             NOW_MILLIS,
                             UserId("rcardin"),
                             Money(100.0),
                         ),
                     ),
-                ).shouldBeLeft(ConcurrentModificationError(PortfolioId("1")))
+                ).shouldBeLeft(
+                    PortfolioEventStore.EventStoreError.SavingError.ConcurrentModificationError(
+                        PortfolioId("1"),
+                    ),
+                )
             }
         }
 
         should("read events from an event stream") {
-            val eventStoreDb = install(
-                ContainerExtension(
-                    DockerContainerDatabase(
-                        DockerContainerDatabase.Builder().version("latest")
-                            .secure(false),
+            val eventStoreDb =
+                install(
+                    ContainerExtension(
+                        DockerContainerDatabase(
+                            DockerContainerDatabase.Builder().version("latest")
+                                .secure(false),
+                        ),
                     ),
-                ),
-            )
+                )
 
             val eventStoreDBClient = eventStoreDb.defaultClient()
 
             with(Json) {
                 val portfolioEventStore = portfolioEventStore(eventStoreDBClient)
-                val events = listOf(
-                    PortfolioCreated(
-                        PortfolioId("1"),
-                        NOW_MILLIS,
-                        UserId("rcardin"),
-                        Money(100.0),
-                    ),
-                    PortfolioEvent.StocksPurchased(
-                        PortfolioId("1"),
-                        NOW_MILLIS,
-                        Stock("AAPL"),
-                        Quantity(10),
-                        Money(1.5),
-                    ),
-                )
-                val eventDataList = events.map { event ->
-                    EventDataBuilder.json(
-                        UUID.randomUUID(),
-                        event.eventType(),
-                        encodeToString(event).encodeToByteArray(),
-                    ).build()
-                }
+                val events =
+                    listOf(
+                        PortfolioEvent.PortfolioCreated(
+                            PortfolioId("1"),
+                            NOW_MILLIS,
+                            UserId("rcardin"),
+                            Money(100.0),
+                        ),
+                        PortfolioEvent.StocksPurchased(
+                            PortfolioId("1"),
+                            NOW_MILLIS,
+                            Stock("AAPL"),
+                            Quantity(10),
+                            Money(1.5),
+                        ),
+                    )
+                val eventDataList =
+                    events.map { event ->
+                        EventDataBuilder.json(
+                            UUID.randomUUID(),
+                            event.eventType(),
+                            encodeToString(event).encodeToByteArray(),
+                        ).build()
+                    }
                 val appendToStreamOptions: AppendToStreamOptions =
                     AppendToStreamOptions.get().expectedRevision(ExpectedRevision.noStream())
                 eventStoreDBClient.appendToStream(
@@ -167,21 +164,22 @@ class EventStoreTest : ShouldSpec({
         }
 
         should("return an UnknownStreamError in case of unknown stream") {
-            val eventStoreDb = install(
-                ContainerExtension(
-                    DockerContainerDatabase(
-                        DockerContainerDatabase.Builder().version("latest")
-                            .secure(false),
+            val eventStoreDb =
+                install(
+                    ContainerExtension(
+                        DockerContainerDatabase(
+                            DockerContainerDatabase.Builder().version("latest")
+                                .secure(false),
+                        ),
                     ),
-                ),
-            )
+                )
 
             val eventStoreDBClient = eventStoreDb.defaultClient()
 
             with(Json) {
                 val portfolioEventStore = portfolioEventStore(eventStoreDBClient)
                 portfolioEventStore.loadState(PortfolioId("1")).shouldBeLeft(
-                    UnknownStreamError(PortfolioId("1")),
+                    PortfolioEventStore.EventStoreError.LoadingError.UnknownStreamError(PortfolioId("1")),
                 )
             }
         }
