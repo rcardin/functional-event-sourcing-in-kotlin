@@ -36,6 +36,7 @@ repositories {
 dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.kotest.extensions:kotest-assertions-arrow:1.4.0")
+    testImplementation("io.kotest.extensions:kotest-assertions-arrow-fx-coroutines:1.4.0")
     testImplementation("io.kotest.extensions:kotest-assertions-ktor:2.0.0")
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.ktor:ktor-server-tests-jvm")
@@ -93,7 +94,6 @@ tasks.withType<KotlinCompile>().configureEach {
         freeCompilerArgs = freeCompilerArgs + "-Xcontext-receivers"
     }
 }
-
 
 sqldelight {
     databases {

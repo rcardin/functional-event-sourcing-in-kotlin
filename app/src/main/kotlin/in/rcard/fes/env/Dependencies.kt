@@ -9,24 +9,30 @@ import `in`.rcard.fes.portfolio.changePortfolioUseCase
 import `in`.rcard.fes.portfolio.createPortfolioUseCase
 import `in`.rcard.fes.portfolio.portfolioEventStore
 import `in`.rcard.fes.portfolio.portfolioService
-import java.util.*
+import `in`.rcard.fes.stock.stockPricesRepository
 import kotlinx.serialization.json.Json
+import java.util.*
 
 class Dependencies(
     val createPortfolioUseCase: CreatePortfolioUseCase,
-    val changePortfolioUseCase: ChangePortfolioUseCase
+    val changePortfolioUseCase: ChangePortfolioUseCase,
 )
 
 suspend fun ResourceScope.dependencies(env: Env): Dependencies {
+    val hikariDataSource = hikari(env.dataSource)
+    val sqlDelight = sqlDelight(hikariDataSource)
+    val stockPricesRepository = stockPricesRepository(sqlDelight.stockPricesQueries)
     val eventStoreClient = eventStoreClient(env.eventStoreDataSource)
-    val portfolioEventStore = with(jsonModule()) {
-        portfolioEventStore(eventStoreClient)
-    }
+    val portfolioEventStore =
+        with(jsonModule()) {
+            portfolioEventStore(eventStoreClient)
+        }
     val portfolioService = portfolioService(portfolioEventStore)
     with(clock()) {
-        val createPortfolioUseCase = with(uuidGenerator()) {
-            createPortfolioUseCase(portfolioService)
-        }
+        val createPortfolioUseCase =
+            with(uuidGenerator()) {
+                createPortfolioUseCase(portfolioService)
+            }
         val changePortfolioUseCase = changePortfolioUseCase(portfolioService)
         return Dependencies(createPortfolioUseCase, changePortfolioUseCase)
     }
@@ -46,14 +52,16 @@ interface UUIDGenerator {
     suspend fun uuid(): String
 }
 
-fun uuidGenerator() = object : UUIDGenerator {
-    override suspend fun uuid(): String = UUID.randomUUID().toString()
-}
+fun uuidGenerator() =
+    object : UUIDGenerator {
+        override suspend fun uuid(): String = UUID.randomUUID().toString()
+    }
 
 interface Clock {
     suspend fun currentTimeMillis(): Long
 }
 
-fun clock() = object : Clock {
-    override suspend fun currentTimeMillis(): Long = System.currentTimeMillis()
-}
+fun clock() =
+    object : Clock {
+        override suspend fun currentTimeMillis(): Long = System.currentTimeMillis()
+    }

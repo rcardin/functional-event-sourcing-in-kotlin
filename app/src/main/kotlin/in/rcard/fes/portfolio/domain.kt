@@ -19,15 +19,19 @@ value class UserId(private val id: String) {
 
 @Serializable
 @JvmInline
-value class Money(private val amount: Double) {
+value class Money(val amount: Double) {
     operator fun plus(money: Money): Money = Money(this.amount + money.amount)
+
     operator fun minus(money: Money): Money = Money(this.amount - money.amount)
+
     operator fun times(quantity: Quantity): Money = Money(this.amount * quantity.amount)
-    operator fun compareTo(money: Money): Int = when {
-        this.amount > money.amount -> 1
-        this.amount < money.amount -> -1
-        else -> 0
-    }
+
+    operator fun compareTo(money: Money): Int =
+        when {
+            this.amount > money.amount -> 1
+            this.amount < money.amount -> -1
+            else -> 0
+        }
 }
 
 fun Portfolio.isAvailable(): Boolean = this.isNotEmpty()
@@ -62,29 +66,32 @@ fun Portfolio.ownedStocks(): List<OwnedStock> =
             is PortfolioEvent.StocksPurchased -> {
                 acc[event.stock]?.let {
                     acc + (
-                        event.stock to OwnedStock(
-                            event.stock,
-                            it.quantity + event.quantity,
-                        )
-                        )
+                        event.stock to
+                            OwnedStock(
+                                event.stock,
+                                it.quantity + event.quantity,
+                            )
+                    )
                 } ?: (
                     acc + (
-                        event.stock to OwnedStock(
-                            event.stock,
-                            event.quantity,
-                        )
-                        )
+                        event.stock to
+                            OwnedStock(
+                                event.stock,
+                                event.quantity,
+                            )
                     )
+                )
             }
 
             is PortfolioEvent.StocksSold -> {
                 acc[event.stock]?.let {
                     acc + (
-                        event.stock to OwnedStock(
-                            event.stock,
-                            it.quantity - event.quantity,
-                        )
-                        )
+                        event.stock to
+                            OwnedStock(
+                                event.stock,
+                                it.quantity - event.quantity,
+                            )
+                    )
                 } ?: acc
             }
 
@@ -100,7 +107,7 @@ val notCreatedPortfolio: List<PortfolioEvent> = emptyList()
 
 @Serializable
 @JvmInline
-value class Stock(private val symbol: String)
+value class Stock(val symbol: String)
 
 @Serializable
 @JvmInline
@@ -108,6 +115,7 @@ value class Quantity(val amount: Int) {
     operator fun plus(qty: Quantity): Quantity = Quantity(this.amount + qty.amount)
 
     operator fun minus(qty: Quantity): Quantity = Quantity(this.amount - qty.amount)
+
     operator fun compareTo(quantity: Quantity): Int {
         return when {
             this.amount > quantity.amount -> 1
