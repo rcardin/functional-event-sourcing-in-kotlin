@@ -8,3 +8,6 @@ CREATE TABLE IF NOT EXISTS stockPrices (
 
 findPriceByStockId:
 SELECT price FROM stockPrices WHERE stock_id = :stockId;
+
+insertStockPrice:
+INSERT INTO stockPrices (stock_id, price) VALUES ?;
