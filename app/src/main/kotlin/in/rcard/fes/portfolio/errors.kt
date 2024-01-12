@@ -16,7 +16,7 @@ sealed interface PortfolioError : DomainError {
     data class InsufficientFunds(override val portfolioId: PortfolioId, val requested: Money, val owned: Money) :
         PortfolioError
 
-    data class NotEnoughStocks(
+    data class InsufficientStocks(
         override val portfolioId: PortfolioId,
         val stock: Stock,
         val requested: Quantity,
@@ -25,6 +25,7 @@ sealed interface PortfolioError : DomainError {
         PortfolioError
 
     data class PortfolioIsClosed(override val portfolioId: PortfolioId) : PortfolioError
+
     data class PriceNotAvailable(override val portfolioId: PortfolioId, val stock: Stock) : PortfolioError
 }
 

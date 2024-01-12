@@ -102,7 +102,12 @@ suspend fun PipelineContext<Unit, ApplicationCall>.respond(error: DomainError): 
         is PortfolioError.InsufficientFunds ->
             call.respond(BadRequest, GenericErrorDTO(listOf("The portfolio has insufficient funds")))
 
-        is PortfolioError.NotEnoughStocks -> TODO()
+        is PortfolioError.InsufficientStocks ->
+            call.respond(
+                BadRequest,
+                GenericErrorDTO(listOf("The portfolio has insufficient stocks of type '${error.stock}'")),
+            )
+
         is PortfolioError.PortfolioAlreadyExists -> TODO()
         is PortfolioError.PortfolioIsClosed -> TODO()
         is PortfolioError.PortfolioNotAvailable -> TODO()

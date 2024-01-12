@@ -85,7 +85,7 @@ class ChangePortfolioRouteTest : ShouldSpec({
             }
         }
 
-        should("return a 400 is the portfolio has insufficient funds to purchase the stock") {
+        should("return a 400 if the portfolio has insufficient funds to purchase the stock") {
             withServer { deps ->
                 coEvery {
                     deps.changePortfolioUseCase.changePortfolio(
@@ -104,6 +104,31 @@ class ChangePortfolioRouteTest : ShouldSpec({
                     }
                 response.shouldHaveStatus(400)
                 response.bodyAsText().shouldBe("{\"errors\":[\"The portfolio has insufficient funds\"]}")
+            }
+        }
+
+        should("return a 400 if the portfolio has insufficient stocks to sell") {
+            withServer { deps ->
+                coEvery {
+                    deps.changePortfolioUseCase.changePortfolio(
+                        ChangePortfolio(
+                            PortfolioId("1"),
+                            Stock("AAPL"),
+                            Quantity(-100),
+                        ),
+                    )
+                } returns
+                    PortfolioError.InsufficientStocks(PortfolioId("1"), Stock("AAPL"), Quantity(100), Quantity(10))
+                        .left()
+                val response =
+                    put {
+                        url("/portfolios/1")
+                        contentType(ContentType.Application.Json)
+                        setBody(ChangePortfolioDTO("AAPL", -100))
+                    }
+                response.shouldHaveStatus(400)
+                response.bodyAsText()
+                    .shouldBe("{\"errors\":[\"The portfolio has insufficient stocks of type 'AAPL'\"]}")
             }
         }
     }

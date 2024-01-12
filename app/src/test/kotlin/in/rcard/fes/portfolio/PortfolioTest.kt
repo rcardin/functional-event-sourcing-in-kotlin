@@ -191,7 +191,7 @@ class PortfolioTest : ShouldSpec({
                 )
 
             decide(cmd, state).shouldBeLeft(
-                PortfolioError.NotEnoughStocks(
+                PortfolioError.InsufficientStocks(
                     PortfolioId("rcardin-1"),
                     Stock("AAPL"),
                     Quantity(10),
@@ -222,7 +222,7 @@ class PortfolioTest : ShouldSpec({
                 )
 
             decide(cmd, state).shouldBeLeft(
-                PortfolioError.NotEnoughStocks(
+                PortfolioError.InsufficientStocks(
                     PortfolioId("rcardin-1"),
                     Stock("GOOG"),
                     Quantity(10),
