@@ -5,13 +5,15 @@ import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString
 import `in`.rcard.fes.portfolio.ChangePortfolioUseCase
 import `in`.rcard.fes.portfolio.CreatePortfolioUseCase
+import `in`.rcard.fes.portfolio.PortfolioEventStore
 import `in`.rcard.fes.portfolio.changePortfolioUseCase
 import `in`.rcard.fes.portfolio.createPortfolioUseCase
 import `in`.rcard.fes.portfolio.portfolioEventStore
 import `in`.rcard.fes.portfolio.portfolioService
 import `in`.rcard.fes.stock.stockPricesRepository
 import kotlinx.serialization.json.Json
-import java.util.*
+import org.slf4j.LoggerFactory
+import java.util.UUID
 
 class Dependencies(
     val createPortfolioUseCase: CreatePortfolioUseCase,
@@ -25,7 +27,9 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
     val eventStoreClient = eventStoreClient(env.eventStoreDataSource)
     val portfolioEventStore =
         with(jsonModule()) {
-            portfolioEventStore(eventStoreClient)
+            with(LoggerFactory.getLogger(PortfolioEventStore::class.java)) {
+                portfolioEventStore(eventStoreClient)
+            }
         }
     val portfolioService = portfolioService(portfolioEventStore)
     with(clock()) {
