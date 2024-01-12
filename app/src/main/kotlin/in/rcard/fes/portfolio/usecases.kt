@@ -4,7 +4,11 @@ import arrow.core.Either
 import arrow.core.raise.either
 import `in`.rcard.fes.env.Clock
 import `in`.rcard.fes.env.UUIDGenerator
+import `in`.rcard.fes.portfolio.InfrastructureError.PersistenceError
+import `in`.rcard.fes.portfolio.PortfolioError.PriceNotAvailable
 import `in`.rcard.fes.stock.FindStockPriceBySymbol
+import `in`.rcard.fes.stock.StockPricesError.StockPricesGenericError
+import `in`.rcard.fes.stock.StockPricesError.StockPricesNotFoundError
 
 interface CreatePortfolioUseCase {
     suspend fun createPortfolio(model: CreatePortfolio): Either<DomainError, PortfolioId>
@@ -36,8 +40,11 @@ fun changePortfolioUseCase(
     override suspend fun changePortfolio(model: ChangePortfolio): Either<DomainError, PortfolioId> =
         either {
             val stockPrice =
-                findStockBySymbol.findPriceBySymbol(model.stock).mapLeft {
-                    PortfolioError.PriceNotAvailable(model.portfolioId, model.stock)
+                findStockBySymbol.findPriceBySymbol(model.stock).mapLeft { error ->
+                    when (error) {
+                        is StockPricesNotFoundError -> PriceNotAvailable(model.portfolioId, model.stock)
+                        is StockPricesGenericError -> PersistenceError
+                    }
                 }.bind()
             if (model.quantity > 0) {
                 buyStocksCommand(model, stockPrice)
