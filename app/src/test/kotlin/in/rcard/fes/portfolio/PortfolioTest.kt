@@ -231,6 +231,20 @@ class PortfolioTest : ShouldSpec({
             )
         }
 
+        should("not sell stocks for a non-existing portfolio") {
+            val cmd =
+                PortfolioCommand.SellStocks(
+                    PortfolioId("rcardin-1"),
+                    NOW_MILLIS,
+                    Stock("AAPL"),
+                    Quantity(11),
+                    Money(10.0),
+                )
+            decide(cmd, notCreatedPortfolio).shouldBeLeft(
+                PortfolioError.PortfolioNotAvailable(PortfolioId("rcardin-1")),
+            )
+        }
+
         should("not sell stocks if the portfolio is closed") {
             val state =
                 nonEmptyListOf(

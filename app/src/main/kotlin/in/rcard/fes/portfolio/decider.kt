@@ -107,6 +107,9 @@ private fun sellStocks(
     command: PortfolioCommand.SellStocks,
 ): Either<PortfolioError, NonEmptyList<PortfolioEvent>> =
     either {
+        if (!portfolio.isAvailable()) {
+            raise(PortfolioNotAvailable(command.portfolioId))
+        }
         if (portfolio.isClosed()) {
             raise(PortfolioError.PortfolioIsClosed(command.portfolioId))
         }
