@@ -5,6 +5,7 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import `in`.rcard.fes.env.Dependencies
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
@@ -90,12 +91,19 @@ suspend inline fun <reified A : Any> Either<DomainError, A>.respond(status: Http
 
 suspend fun PipelineContext<Unit, ApplicationCall>.respond(error: DomainError): Unit =
     when (error) {
-        is ValidationError -> call.respond(HttpStatusCode.BadRequest, error.toGenericError())
+        is ValidationError -> call.respond(BadRequest, error.toGenericError())
         is PortfolioError.PriceNotAvailable ->
             call.respond(
-                HttpStatusCode.BadRequest,
+                BadRequest,
                 GenericErrorDTO(listOf("Stock '${error.stock}' is not available")),
             )
 
-        else -> call.respond(HttpStatusCode.InternalServerError)
+        is InfrastructureError.PersistenceError -> call.respond(HttpStatusCode.InternalServerError)
+        is PortfolioError.InsufficientFunds ->
+            call.respond(BadRequest, GenericErrorDTO(listOf("The portfolio has insufficient funds")))
+
+        is PortfolioError.NotEnoughStocks -> TODO()
+        is PortfolioError.PortfolioAlreadyExists -> TODO()
+        is PortfolioError.PortfolioIsClosed -> TODO()
+        is PortfolioError.PortfolioNotAvailable -> TODO()
     }
