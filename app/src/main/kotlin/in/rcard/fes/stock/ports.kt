@@ -7,6 +7,7 @@ import `in`.rcard.fes.portfolio.Money
 import `in`.rcard.fes.portfolio.Stock
 import `in`.rcard.fes.sqldelight.StockPricesQueries
 import `in`.rcard.fes.stock.StockPricesError.StockPricesGenericError
+import org.slf4j.Logger
 
 sealed interface StockPricesError {
     data class StockPricesNotFoundError(val stock: Stock) : StockPricesError
@@ -15,10 +16,10 @@ sealed interface StockPricesError {
 }
 
 interface FindStockPriceBySymbol {
-    // TODO Is it correct to return a StockPricesError?
     suspend fun findPriceBySymbol(symbol: Stock): Either<StockPricesError, Money>
 }
 
+context(Logger)
 fun stockPricesRepository(stockPricesQueries: StockPricesQueries): FindStockPriceBySymbol =
     object : FindStockPriceBySymbol {
         override suspend fun findPriceBySymbol(symbol: Stock): Either<StockPricesError, Money> =
@@ -27,7 +28,8 @@ fun stockPricesRepository(stockPricesQueries: StockPricesQueries): FindStockPric
                     stockPricesQueries.findPriceByStockId(symbol).executeAsOneOrNull()?.price ?: raise(
                         StockPricesError.StockPricesNotFoundError(symbol),
                     )
-                }) {
+                }) { exception ->
+                    this@Logger.error("Error while retrieving the price of the stock $symbol", exception)
                     raise(StockPricesGenericError)
                 }
             }

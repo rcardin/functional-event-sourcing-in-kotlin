@@ -10,6 +10,7 @@ import `in`.rcard.fes.portfolio.changePortfolioUseCase
 import `in`.rcard.fes.portfolio.createPortfolioUseCase
 import `in`.rcard.fes.portfolio.portfolioEventStore
 import `in`.rcard.fes.portfolio.portfolioService
+import `in`.rcard.fes.stock.FindStockPriceBySymbol
 import `in`.rcard.fes.stock.stockPricesRepository
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
@@ -23,7 +24,12 @@ class Dependencies(
 suspend fun ResourceScope.dependencies(env: Env): Dependencies {
     val hikariDataSource = hikari(env.dataSource)
     val sqlDelight = sqlDelight(hikariDataSource)
-    val stockPricesRepository = stockPricesRepository(sqlDelight.stockPricesQueries)
+    val stockPricesRepository =
+        with(LoggerFactory.getLogger(FindStockPriceBySymbol::class.java)) {
+            stockPricesRepository(
+                sqlDelight.stockPricesQueries,
+            )
+        }
     val eventStoreClient = eventStoreClient(env.eventStoreDataSource)
     val portfolioEventStore =
         with(jsonModule()) {

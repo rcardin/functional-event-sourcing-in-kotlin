@@ -11,6 +11,7 @@ import io.kotest.assertions.arrow.fx.coroutines.extension
 import io.kotest.core.extensions.install
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.extensions.testcontainers.JdbcDatabaseContainerExtension
+import org.slf4j.LoggerFactory
 import org.testcontainers.containers.PostgreSQLContainer
 
 class FindStockPriceBySymbolTest : ShouldSpec({
@@ -25,6 +26,8 @@ class FindStockPriceBySymbolTest : ShouldSpec({
             }.extension(),
         )
 
+    val logger = LoggerFactory.getLogger(FindStockPriceBySymbolTest::class.java)
+
     beforeSpec {
         database.get().stockPricesQueries.insertStockPrice(StockPrices(Stock("AAPL"), Money(100.0)))
     }
@@ -32,12 +35,12 @@ class FindStockPriceBySymbolTest : ShouldSpec({
     context("The findPriceBySymbol function") {
 
         should("return the price of the stock") {
-            val stockPricesRepository = stockPricesRepository(database.get().stockPricesQueries)
+            val stockPricesRepository = with(logger) { stockPricesRepository(database.get().stockPricesQueries) }
             stockPricesRepository.findPriceBySymbol(Stock("AAPL")).shouldBeRight(Money(100.0))
         }
 
         should("return a StockPricesNotFoundError if the symbol is not present") {
-            val stockPricesRepository = stockPricesRepository(database.get().stockPricesQueries)
+            val stockPricesRepository = with(logger) { stockPricesRepository(database.get().stockPricesQueries) }
             stockPricesRepository.findPriceBySymbol(Stock("GOOG"))
                 .shouldBeLeft(StockPricesError.StockPricesNotFoundError(Stock("GOOG")))
         }
