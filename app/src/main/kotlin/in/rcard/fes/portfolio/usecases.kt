@@ -1,8 +1,10 @@
 package `in`.rcard.fes.portfolio
 
 import arrow.core.Either
+import arrow.core.raise.either
 import `in`.rcard.fes.env.Clock
 import `in`.rcard.fes.env.UUIDGenerator
+import `in`.rcard.fes.stock.FindStockPriceBySymbol
 
 interface CreatePortfolioUseCase {
     suspend fun createPortfolio(model: CreatePortfolio): Either<DomainError, PortfolioId>
@@ -27,32 +29,45 @@ interface ChangePortfolioUseCase {
 }
 
 context(Clock)
-fun changePortfolioUseCase(portfolioService: PortfolioService) =
-    object : ChangePortfolioUseCase {
-        override suspend fun changePortfolio(model: ChangePortfolio): Either<DomainError, PortfolioId> =
+fun changePortfolioUseCase(
+    portfolioService: PortfolioService,
+    findStockBySymbol: FindStockPriceBySymbol,
+) = object : ChangePortfolioUseCase {
+    override suspend fun changePortfolio(model: ChangePortfolio): Either<DomainError, PortfolioId> =
+        either {
+            val stockPrice =
+                findStockBySymbol.findPriceBySymbol(model.stock).mapLeft {
+                    PortfolioError.PriceNotAvailable(model.portfolioId, model.stock)
+                }.bind()
             if (model.quantity > 0) {
-                buyStocksCommand(model)
+                buyStocksCommand(model, stockPrice)
             } else {
-                sellStocksCommand(model)
-            }.let { portfolioService.handle(it) }
+                sellStocksCommand(model, stockPrice)
+            }.let { portfolioService.handle(it).bind() }
+        }
 
-        private suspend fun buyStocksCommand(model: ChangePortfolio) =
-            PortfolioCommand.BuyStocks(
-                model.portfolioId,
-                currentTimeMillis(),
-                model.stock,
-                model.quantity,
-                Money(0.0), // FIXME
-            )
+    private suspend fun buyStocksCommand(
+        model: ChangePortfolio,
+        stockPrice: Money,
+    ) = PortfolioCommand.BuyStocks(
+        model.portfolioId,
+        currentTimeMillis(),
+        model.stock,
+        model.quantity,
+        stockPrice,
+    )
 
-        private suspend fun sellStocksCommand(model: ChangePortfolio): PortfolioCommand.SellStocks =
-            PortfolioCommand.SellStocks(
-                model.portfolioId,
-                currentTimeMillis(),
-                model.stock,
-                model.quantity,
-                Money(0.0), // FIXME
-            )
-    }
+    private suspend fun sellStocksCommand(
+        model: ChangePortfolio,
+        stockPrice: Money,
+    ): PortfolioCommand.SellStocks =
+        PortfolioCommand.SellStocks(
+            model.portfolioId,
+            currentTimeMillis(),
+            model.stock,
+            -model.quantity,
+            stockPrice,
+        )
+}
 
 data class ChangePortfolio(val portfolioId: PortfolioId, val stock: Stock, val quantity: Quantity)

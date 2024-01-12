@@ -16,7 +16,7 @@ sealed interface StockPricesError {
 
 interface FindStockPriceBySymbol {
     // TODO Is it correct to return a StockPricesError?
-    suspend fun findPriceBySymbol(symbol: Stock): Either<StockPricesError, Money?>
+    suspend fun findPriceBySymbol(symbol: Stock): Either<StockPricesError, Money>
 }
 
 fun stockPricesRepository(stockPricesQueries: StockPricesQueries): FindStockPriceBySymbol =

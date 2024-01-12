@@ -116,6 +116,8 @@ value class Quantity(val amount: Int) {
 
     operator fun minus(qty: Quantity): Quantity = Quantity(this.amount - qty.amount)
 
+    operator fun unaryMinus(): Quantity = Quantity(-this.amount)
+
     operator fun compareTo(quantity: Quantity): Int {
         return when {
             this.amount > quantity.amount -> 1

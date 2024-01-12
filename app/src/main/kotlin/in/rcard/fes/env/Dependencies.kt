@@ -33,7 +33,7 @@ suspend fun ResourceScope.dependencies(env: Env): Dependencies {
             with(uuidGenerator()) {
                 createPortfolioUseCase(portfolioService)
             }
-        val changePortfolioUseCase = changePortfolioUseCase(portfolioService)
+        val changePortfolioUseCase = changePortfolioUseCase(portfolioService, stockPricesRepository)
         return Dependencies(createPortfolioUseCase, changePortfolioUseCase)
     }
 }
