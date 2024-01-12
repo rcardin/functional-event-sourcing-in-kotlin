@@ -1,5 +1,6 @@
 package `in`.rcard.fes.portfolio
 
+import arrow.core.left
 import arrow.core.right
 import `in`.rcard.fes.withServer
 import io.kotest.assertions.ktor.client.shouldHaveStatus
@@ -59,6 +60,28 @@ class ChangePortfolioRouteTest : ShouldSpec({
                     }
                 response.shouldHaveStatus(400)
                 response.bodyAsText().shouldBe("{\"errors\":[\"Field 'stock' is required\"]}")
+            }
+        }
+
+        should("return a 400 if the stock to purchase or sell is not available") {
+            withServer { deps ->
+                coEvery {
+                    deps.changePortfolioUseCase.changePortfolio(
+                        ChangePortfolio(
+                            PortfolioId("1"),
+                            Stock("AAPL"),
+                            Quantity(100),
+                        ),
+                    )
+                } returns PortfolioError.PriceNotAvailable(PortfolioId("1"), Stock("AAPL")).left()
+                val response =
+                    put {
+                        url("/portfolios/1")
+                        contentType(ContentType.Application.Json)
+                        setBody(ChangePortfolioDTO("AAPL", 100))
+                    }
+                response.shouldHaveStatus(400)
+                response.bodyAsText().shouldBe("{\"errors\":[\"Stock 'AAPL' is not available\"]}")
             }
         }
     }

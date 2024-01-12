@@ -107,7 +107,9 @@ val notCreatedPortfolio: List<PortfolioEvent> = emptyList()
 
 @Serializable
 @JvmInline
-value class Stock(val symbol: String)
+value class Stock(val symbol: String) {
+    override fun toString(): String = symbol
+}
 
 @Serializable
 @JvmInline

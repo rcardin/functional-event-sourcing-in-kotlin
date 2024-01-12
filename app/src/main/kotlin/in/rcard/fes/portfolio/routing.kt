@@ -26,7 +26,7 @@ fun Application.configureRouting(deps: Dependencies) {
 
 fun Route.portfolioRoutes(
     createPortfolioUseCase: CreatePortfolioUseCase,
-    changePortfolioUseCase: ChangePortfolioUseCase
+    changePortfolioUseCase: ChangePortfolioUseCase,
 ) {
     post("/portfolios") {
         with(createPortfolioDTOValidator) {
@@ -41,21 +41,21 @@ fun Route.portfolioRoutes(
     put("/portfolios/{portfolioId}") {
         with(changePortfolioDTOValidator) {
             either {
-                val portfolioId = call.parameters["portfolioId"] ?: raise(
-                    ValidationError(
-                        nonEmptyListOf(
-                            InvalidFieldError.MissingFieldError(
-                                "portfolioId"
-                            )
-                        )
+                val portfolioId =
+                    call.parameters["portfolioId"] ?: raise(
+                        ValidationError(
+                            nonEmptyListOf(
+                                InvalidFieldError.MissingFieldError(
+                                    "portfolioId",
+                                ),
+                            ),
+                        ),
                     )
-                )
                 val dto = call.validate<ChangePortfolioDTO>().bind()
                 val model = dto.toModel(portfolioId)
                 changePortfolioUseCase.changePortfolio(model).bind()
             }.respond(HttpStatusCode.NoContent)
         }
-        call.respond(HttpStatusCode.NotImplemented)
     }
     delete("/portfolio/{portfolioId}") {
         call.respond(HttpStatusCode.NotImplemented)
@@ -68,7 +68,7 @@ data class CreatePortfolioDTO(val userId: String, val amount: Double)
 private fun CreatePortfolioDTO.toModel(): CreatePortfolio =
     CreatePortfolio(
         UserId(userId),
-        Money(amount)
+        Money(amount),
     )
 
 @Serializable
@@ -78,7 +78,7 @@ private fun ChangePortfolioDTO.toModel(portfolioId: String): ChangePortfolio =
     ChangePortfolio(
         PortfolioId(portfolioId),
         Stock(stock),
-        Quantity(quantity)
+        Quantity(quantity),
     )
 
 context(PipelineContext<Unit, ApplicationCall>)
@@ -88,7 +88,14 @@ suspend inline fun <reified A : Any> Either<DomainError, A>.respond(status: Http
         is Either.Right -> call.respond(status, value)
     }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.respond(error: DomainError): Unit = when (error) {
-    is ValidationError -> call.respond(HttpStatusCode.BadRequest, error.toGenericError())
-    else -> call.respond(HttpStatusCode.InternalServerError)
-}
+suspend fun PipelineContext<Unit, ApplicationCall>.respond(error: DomainError): Unit =
+    when (error) {
+        is ValidationError -> call.respond(HttpStatusCode.BadRequest, error.toGenericError())
+        is PortfolioError.PriceNotAvailable ->
+            call.respond(
+                HttpStatusCode.BadRequest,
+                GenericErrorDTO(listOf("Stock '${error.stock}' is not available")),
+            )
+
+        else -> call.respond(HttpStatusCode.InternalServerError)
+    }
