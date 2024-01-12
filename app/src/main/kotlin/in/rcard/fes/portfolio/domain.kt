@@ -9,7 +9,9 @@ typealias Prices = Map<Stock, Money>
 
 @Serializable
 @JvmInline
-value class PortfolioId(val id: String)
+value class PortfolioId(val id: String) {
+    override fun toString(): String = id
+}
 
 @Serializable
 @JvmInline

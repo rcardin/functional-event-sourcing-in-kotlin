@@ -1,6 +1,8 @@
 package `in`.rcard.fes.portfolio
 
+import arrow.core.left
 import arrow.core.right
+import `in`.rcard.fes.portfolio.PortfolioError.PortfolioAlreadyExists
 import `in`.rcard.fes.withServer
 import io.kotest.assertions.ktor.client.shouldHaveHeader
 import io.kotest.assertions.ktor.client.shouldHaveStatus
@@ -58,6 +60,27 @@ class CreatePortfolioRouteTest : ShouldSpec({
                     }
                 response.shouldHaveStatus(400)
                 response.bodyAsText().shouldBe("{\"errors\":[\"Field 'amount' must be positive\"]}")
+            }
+        }
+
+        should("return a 400 if the portfolio with the given id already exists") {
+            withServer { deps ->
+                coEvery {
+                    deps.createPortfolioUseCase.createPortfolio(
+                        CreatePortfolio(
+                            UserId("rcardin"),
+                            Money(100.0),
+                        ),
+                    )
+                } returns PortfolioAlreadyExists(PortfolioId("1")).left()
+                val response =
+                    post {
+                        url("/portfolios")
+                        contentType(ContentType.Application.Json)
+                        setBody(CreatePortfolioDTO("rcardin", 100.0))
+                    }
+                response.shouldHaveStatus(400)
+                response.bodyAsText().shouldBe("{\"errors\":[\"Portfolio with id '1' already exists\"]}")
             }
         }
     }

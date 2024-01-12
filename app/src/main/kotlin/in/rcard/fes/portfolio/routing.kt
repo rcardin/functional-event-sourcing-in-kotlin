@@ -108,7 +108,11 @@ suspend fun PipelineContext<Unit, ApplicationCall>.respond(error: DomainError): 
                 GenericErrorDTO(listOf("The portfolio has insufficient stocks of type '${error.stock}'")),
             )
 
-        is PortfolioError.PortfolioAlreadyExists -> TODO()
+        is PortfolioError.PortfolioAlreadyExists ->
+            call.respond(
+                BadRequest,
+                GenericErrorDTO(listOf("Portfolio with id '${error.portfolioId}' already exists")),
+            )
         is PortfolioError.PortfolioIsClosed -> TODO()
         is PortfolioError.PortfolioNotAvailable -> TODO()
     }
