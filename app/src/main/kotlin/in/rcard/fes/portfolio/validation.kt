@@ -70,14 +70,17 @@ class ValidationScope {
 fun <T> validation(validationBlock: ValidationScope.() -> Either<ValidationError, T>): Either<ValidationError, T> =
     with(ValidationScope(), validationBlock)
 
+context(ValidationScope)
 interface Required<T> {
     fun T.required(): Boolean
 }
 
+context(ValidationScope)
 interface Positive<T : Number> {
     fun T.positive(): Boolean
 }
 
+context(ValidationScope)
 interface NonZero<T : Number> {
     fun T.nonZero(): Boolean
 }
