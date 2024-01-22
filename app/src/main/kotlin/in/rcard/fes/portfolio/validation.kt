@@ -70,33 +70,36 @@ class ValidationScope {
 fun <T> validation(validationBlock: ValidationScope.() -> Either<ValidationError, T>): Either<ValidationError, T> =
     with(ValidationScope(), validationBlock)
 
-context(ValidationScope)
 interface Required<T> {
+    context(ValidationScope)
     fun T.required(): Boolean
 }
 
-context(ValidationScope)
 interface Positive<T : Number> {
+    context(ValidationScope)
     fun T.positive(): Boolean
 }
 
-context(ValidationScope)
 interface NonZero<T : Number> {
+    context(ValidationScope)
     fun T.nonZero(): Boolean
 }
 
 val requiredString =
     object : Required<String> {
+        context(ValidationScope)
         override fun String.required(): Boolean = this.isNotBlank()
     }
 
 val positiveDouble =
     object : Positive<Double> {
+        context(ValidationScope)
         override fun Double.positive(): Boolean = this > 0.0
     }
 
 val nonZeroInteger =
     object : NonZero<Int> {
+        context(ValidationScope)
         override fun Int.nonZero(): Boolean = this != 0
     }
 
