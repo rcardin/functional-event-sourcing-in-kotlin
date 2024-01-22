@@ -34,44 +34,52 @@ sealed interface InvalidFieldError {
 
 fun ValidationError.toGenericError(): GenericErrorDTO = GenericErrorDTO(fieldErrors.all.map { it.toString() })
 
-interface ValidationScope<T> {
+interface ValidatorScope<T> {
     fun T.validate(): Either<ValidationError, T>
 }
 
-context (ValidationScope<T>)
+context (ValidatorScope<T>)
 suspend inline fun <reified T : Any> ApplicationCall.validate(): Either<ValidationError, T> = receive<T>().validate()
 
-interface Required<T> {
-    fun T.required(): Boolean
-
-    fun T.required(fieldName: String): EitherNel<MissingFieldError, T> =
+class ValidationScope {
+    context(Required<T>)
+    fun <T> T.required(fieldName: String): EitherNel<MissingFieldError, T> =
         if (required()) {
             this.right()
         } else {
             MissingFieldError(fieldName).left().toEitherNel()
         }
-}
 
-interface Positive<T : Number> {
-    fun T.positive(): Boolean
-
-    fun T.positive(fieldName: String): EitherNel<NegativeFieldError, T> =
+    context(Positive<T>)
+    fun <T : Number> T.positive(fieldName: String): EitherNel<NegativeFieldError, T> =
         if (positive()) {
             this.right()
         } else {
             NegativeFieldError(fieldName).left().toEitherNel()
         }
-}
 
-interface NonZero<T : Number> {
-    fun T.nonZero(): Boolean
-
-    fun T.nonZero(fieldName: String): EitherNel<ZeroFieldError, T> =
+    context(NonZero<T>)
+    fun <T : Number> T.nonZero(fieldName: String): EitherNel<ZeroFieldError, T> =
         if (nonZero()) {
             this.right()
         } else {
             ZeroFieldError(fieldName).left().toEitherNel()
         }
+}
+
+fun <T> validation(validationBlock: ValidationScope.() -> Either<ValidationError, T>): Either<ValidationError, T> =
+    with(ValidationScope(), validationBlock)
+
+interface Required<T> {
+    fun T.required(): Boolean
+}
+
+interface Positive<T : Number> {
+    fun T.positive(): Boolean
+}
+
+interface NonZero<T : Number> {
+    fun T.nonZero(): Boolean
 }
 
 val requiredString =
@@ -90,29 +98,33 @@ val nonZeroInteger =
     }
 
 val createPortfolioDTOValidator =
-    object : ValidationScope<CreatePortfolioDTO> {
+    object : ValidatorScope<CreatePortfolioDTO> {
         override fun CreatePortfolioDTO.validate(): Either<ValidationError, CreatePortfolioDTO> =
-            with(requiredString) {
-                with(positiveDouble) {
-                    zipOrAccumulate(
-                        userId.required("userId"),
-                        amount.positive("amount"),
-                        ::CreatePortfolioDTO,
-                    ).mapLeft(::ValidationError)
+            validation {
+                with(requiredString) {
+                    with(positiveDouble) {
+                        zipOrAccumulate(
+                            userId.required("userId"),
+                            amount.positive("amount"),
+                            ::CreatePortfolioDTO,
+                        ).mapLeft(::ValidationError)
+                    }
                 }
             }
     }
 
 val changePortfolioDTOValidator =
-    object : ValidationScope<ChangePortfolioDTO> {
+    object : ValidatorScope<ChangePortfolioDTO> {
         override fun ChangePortfolioDTO.validate(): Either<ValidationError, ChangePortfolioDTO> =
-            with(requiredString) {
-                with(nonZeroInteger) {
-                    zipOrAccumulate(
-                        stock.required("stock"),
-                        quantity.nonZero("quantity"),
-                        ::ChangePortfolioDTO,
-                    ).mapLeft(::ValidationError)
+            validation {
+                with(requiredString) {
+                    with(nonZeroInteger) {
+                        zipOrAccumulate(
+                            stock.required("stock"),
+                            quantity.nonZero("quantity"),
+                            ::ChangePortfolioDTO,
+                        ).mapLeft(::ValidationError)
+                    }
                 }
             }
     }
