@@ -3,9 +3,9 @@ package `in`.rcard.fes.portfolio
 import arrow.core.Either
 import arrow.core.Either.Companion.zipOrAccumulate
 import arrow.core.EitherNel
-import arrow.core.left
-import arrow.core.right
-import arrow.core.toEitherNel
+import arrow.core.nonEmptyListOf
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import `in`.rcard.fes.portfolio.InvalidFieldError.MissingFieldError
 import `in`.rcard.fes.portfolio.InvalidFieldError.NegativeFieldError
 import `in`.rcard.fes.portfolio.InvalidFieldError.ZeroFieldError
@@ -44,26 +44,23 @@ suspend inline fun <reified T : Any> ApplicationCall.validate(): Either<Validati
 class ValidationScope {
     context(Required<T>)
     fun <T> T.required(fieldName: String): EitherNel<MissingFieldError, T> =
-        if (required()) {
-            this.right()
-        } else {
-            MissingFieldError(fieldName).left().toEitherNel()
+        either {
+            ensure(required()) { nonEmptyListOf(MissingFieldError(fieldName)) }
+            this@required
         }
 
     context(Positive<T>)
     fun <T : Number> T.positive(fieldName: String): EitherNel<NegativeFieldError, T> =
-        if (positive()) {
-            this.right()
-        } else {
-            NegativeFieldError(fieldName).left().toEitherNel()
+        either {
+            ensure(positive()) { nonEmptyListOf(NegativeFieldError(fieldName)) }
+            this@positive
         }
 
     context(NonZero<T>)
     fun <T : Number> T.nonZero(fieldName: String): EitherNel<ZeroFieldError, T> =
-        if (nonZero()) {
-            this.right()
-        } else {
-            ZeroFieldError(fieldName).left().toEitherNel()
+        either {
+            ensure(nonZero()) { nonEmptyListOf(ZeroFieldError(fieldName)) }
+            this@nonZero
         }
 }
 
@@ -85,6 +82,14 @@ interface NonZero<T : Number> {
     fun T.nonZero(): Boolean
 }
 
+interface InRange<T : Number> {
+    context(ValidationScope)
+    fun T.inRange(
+        min: T,
+        max: T,
+    ): Boolean
+}
+
 val requiredString =
     object : Required<String> {
         context(ValidationScope)
@@ -101,6 +106,15 @@ val nonZeroInteger =
     object : NonZero<Int> {
         context(ValidationScope)
         override fun Int.nonZero(): Boolean = this != 0
+    }
+
+val rangeInteger =
+    object : InRange<Int> {
+        context(ValidationScope)
+        override fun Int.inRange(
+            min: Int,
+            max: Int,
+        ): Boolean = this in min..max
     }
 
 val createPortfolioDTOValidator =
