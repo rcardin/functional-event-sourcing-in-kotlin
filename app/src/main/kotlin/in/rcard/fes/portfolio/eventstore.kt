@@ -26,7 +26,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
-import java.util.*
+import java.util.UUID
 
 typealias ETag = Long
 typealias LoadedPortfolio = Pair<ETag, Portfolio>
