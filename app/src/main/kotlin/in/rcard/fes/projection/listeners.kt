@@ -13,10 +13,10 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.serialization.json.Json.Default.decodeFromString
+import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 
-context(Logger)
+context(Logger, Json)
 fun portfolioCreatedEventFlow(eventStoreClient: EventStoreDBClient): Flow<PortfolioEvent> =
     channelFlow {
         val subscriptionListener =
@@ -31,7 +31,7 @@ fun portfolioCreatedEventFlow(eventStoreClient: EventStoreDBClient): Flow<Portfo
                                 "by subscription: ${subscription?.subscriptionId}",
                         )
                         val portfolioEvent =
-                            decodeFromString<PortfolioEvent>(event.originalEvent.eventData.decodeToString()) as PortfolioCreated
+                            decodeFromString<PortfolioCreated>(event.originalEvent.eventData.decodeToString())
                         trySendBlocking(portfolioEvent)
                     }
                 }
