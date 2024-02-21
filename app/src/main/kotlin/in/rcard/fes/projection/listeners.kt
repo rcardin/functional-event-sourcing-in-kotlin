@@ -6,19 +6,18 @@ import com.eventstore.dbclient.SubscribeToAllOptions
 import com.eventstore.dbclient.Subscription
 import com.eventstore.dbclient.SubscriptionFilter
 import com.eventstore.dbclient.SubscriptionListener
-import `in`.rcard.fes.portfolio.PortfolioEvent
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 
 context(Logger, Json)
-fun portfolioCreatedEventFlow(eventStoreClient: EventStoreDBClient): Flow<PortfolioEvent> =
-    channelFlow {
+fun portfolioCreatedEventFlow(eventStoreClient: EventStoreDBClient): Flow<PortfolioCreated> =
+    callbackFlow {
         val subscriptionListener =
             object : SubscriptionListener() {
                 override fun onEvent(
