@@ -28,6 +28,7 @@ The project uses the following technologies:
 - Kotlin
 - [Arrow Kt](https://arrow-kt.io/)
 - [Ktor](https://ktor.io/)
+- [Kotlinx Coroutines Flow](https://kotlinlang.org/docs/flow.html)
 - [EventStoreDB](https://eventstore.com/)
 - [SQLDelight](https://cashapp.github.io/sqldelight/)
 - [Kotest](https://kotest.io/)
