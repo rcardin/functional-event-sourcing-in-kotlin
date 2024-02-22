@@ -9,9 +9,10 @@ import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.UserId
 import `in`.rcard.fes.portfolio.eventType
 import `in`.rcard.fes.withEventStoreDb
-import io.kotest.core.annotation.Ignored
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -21,7 +22,6 @@ import java.util.UUID
 
 private val NOW_MILLIS = Instant.now().toEpochMilli()
 
-@Ignored("This test is ignored because there listener stay up and running")
 class PortfolioCreatedEventListenerTest : ShouldSpec({
 
     val logger = LoggerFactory.getLogger(PortfolioCreatedEventListenerTest::class.java)
@@ -54,9 +54,8 @@ class PortfolioCreatedEventListenerTest : ShouldSpec({
                             portfolioCreatedEventData,
                         ).await()
                         val portfolioCreatedEventFlow = portfolioCreatedEventFlow(eventStoreDBClient)
-                        portfolioCreatedEventFlow.collect { actualEvent ->
-                            actualEvent shouldBe portfolioCreatedEvent
-                        }
+                        val actualEvent = portfolioCreatedEventFlow.take(1).single()
+                        actualEvent shouldBe portfolioCreatedEvent
                     }
                 }
             }

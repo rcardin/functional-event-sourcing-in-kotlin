@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.future.await
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 
@@ -49,6 +50,6 @@ fun portfolioCreatedEventFlow(eventStoreClient: EventStoreDBClient): Flow<Portfo
                         .withEventTypeRegularExpression("portfolio-create")
                         .build(),
                 )
-        eventStoreClient.subscribeToAll(subscriptionListener, subscriptionFilter)
-        awaitClose()
+        val subscription = eventStoreClient.subscribeToAll(subscriptionListener, subscriptionFilter).await()
+        awaitClose { subscription.stop() }
     }
