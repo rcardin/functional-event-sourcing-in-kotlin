@@ -5,14 +5,17 @@ import com.eventstore.dbclient.EventDataBuilder
 import com.eventstore.dbclient.ExpectedRevision
 import `in`.rcard.fes.portfolio.Money
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
+import `in`.rcard.fes.portfolio.PortfolioEvent.StocksPurchased
 import `in`.rcard.fes.portfolio.PortfolioId
+import `in`.rcard.fes.portfolio.Quantity
+import `in`.rcard.fes.portfolio.Stock
 import `in`.rcard.fes.portfolio.UserId
 import `in`.rcard.fes.portfolio.eventType
 import `in`.rcard.fes.withEventStoreDb
 import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.flow.single
+import io.kotest.matchers.collections.shouldContainExactly
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -31,15 +34,34 @@ class PortfolioCreatedEventListenerTest : ShouldSpec({
             withEventStoreDb { eventStoreDBClient ->
                 with(Json) {
                     with(logger) {
-                        val portfolioCreatedEvent =
+                        val rcardinPortfolioCreated =
                             PortfolioCreated(
                                 PortfolioId("1"),
                                 NOW_MILLIS,
                                 UserId("rcardin"),
                                 Money(100.0),
                             )
-                        val portfolioCreatedEventData =
-                            portfolioCreatedEvent.let {
+                        val danielPortfolioCreated =
+                            PortfolioCreated(
+                                PortfolioId("2"),
+                                NOW_MILLIS,
+                                UserId("daniel"),
+                                Money(50.0),
+                            )
+                        val portfolioEvents =
+                            listOf(
+                                StocksPurchased(
+                                    PortfolioId("3"),
+                                    NOW_MILLIS,
+                                    Stock("AAPL"),
+                                    Quantity(1000),
+                                    Money(120.0),
+                                ),
+                                rcardinPortfolioCreated,
+                                danielPortfolioCreated,
+                            )
+                        val portfolioEventsData =
+                            portfolioEvents.map {
                                 EventDataBuilder.json(
                                     UUID.randomUUID(),
                                     it.eventType(),
@@ -49,13 +71,13 @@ class PortfolioCreatedEventListenerTest : ShouldSpec({
                         val appendToStreamOptions: AppendToStreamOptions =
                             AppendToStreamOptions.get().expectedRevision(ExpectedRevision.noStream())
                         eventStoreDBClient.appendToStream(
-                            "portfolio-1",
+                            "portfolios",
                             appendToStreamOptions,
-                            portfolioCreatedEventData,
+                            portfolioEventsData.iterator(),
                         ).await()
                         val portfolioCreatedEventFlow = portfolioCreatedEventFlow(eventStoreDBClient)
-                        val actualEvent = portfolioCreatedEventFlow.take(1).single()
-                        actualEvent shouldBe portfolioCreatedEvent
+                        val actualEvent = portfolioCreatedEventFlow.take(2).toList()
+                        actualEvent.shouldContainExactly(rcardinPortfolioCreated, danielPortfolioCreated)
                     }
                 }
             }

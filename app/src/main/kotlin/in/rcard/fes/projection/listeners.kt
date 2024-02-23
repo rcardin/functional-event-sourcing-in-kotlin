@@ -6,6 +6,7 @@ import com.eventstore.dbclient.SubscribeToAllOptions
 import com.eventstore.dbclient.Subscription
 import com.eventstore.dbclient.SubscriptionFilter
 import com.eventstore.dbclient.SubscriptionListener
+import `in`.rcard.fes.portfolio.PortfolioEvent
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
@@ -31,7 +32,7 @@ fun portfolioCreatedEventFlow(eventStoreClient: EventStoreDBClient): Flow<Portfo
                                 "by subscription: ${subscription?.subscriptionId}",
                         )
                         val portfolioEvent =
-                            decodeFromString<PortfolioCreated>(event.originalEvent.eventData.decodeToString())
+                            decodeFromString<PortfolioEvent>(event.originalEvent.eventData.decodeToString()) as PortfolioCreated
                         trySendBlocking(portfolioEvent)
                     }
                 }
