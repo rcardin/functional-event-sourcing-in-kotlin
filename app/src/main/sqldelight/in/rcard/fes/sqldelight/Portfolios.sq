@@ -1,0 +1,15 @@
+import in.rcard.fes.portfolio.Money;
+import in.rcard.fes.portfolio.PortfolioId;
+import in.rcard.fes.portfolio.UserId;
+
+CREATE TABLE IF NOT EXISTS portfolios (
+    portfolio_id VARCHAR(50) AS PortfolioId NOT NULL,
+    user_id VARCHAR(255) AS UserId NOT NULL,
+    money DECIMAL(10, 2) AS Money NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT portfolios_pk PRIMARY KEY (portfolio_id, user_id)
+);
+
+insertPortfolio:
+INSERT INTO portfolios (portfolio_id, user_id, money, created_at, updated_at) VALUES ?;

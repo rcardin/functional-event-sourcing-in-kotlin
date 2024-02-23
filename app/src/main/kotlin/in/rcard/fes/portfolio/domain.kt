@@ -15,7 +15,7 @@ value class PortfolioId(val id: String) {
 
 @Serializable
 @JvmInline
-value class UserId(private val id: String) {
+value class UserId(val id: String) {
     override fun toString(): String = id
 }
 
