@@ -6,8 +6,10 @@ import `in`.rcard.fes.portfolio.Money
 import `in`.rcard.fes.portfolio.PortfolioEvent.PortfolioCreated
 import `in`.rcard.fes.portfolio.PortfolioId
 import `in`.rcard.fes.portfolio.UserId
+import `in`.rcard.fes.projection.PortfoliosError.PortfolioAlreadyExistsError
 import `in`.rcard.fes.sqldelight.Portfolios
 import `in`.rcard.fes.stock.FindStockPriceBySymbolTest
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.arrow.fx.coroutines.extension
 import io.kotest.core.extensions.install
@@ -64,6 +66,20 @@ class InsertPortfolioTest : ShouldSpec({
                     created_at = NOW_LOCAL_DATE_TIME,
                     updated_at = NOW_LOCAL_DATE_TIME,
                 )
+        }
+
+        should("return a PortfolioAlreadyExistsError if the portfolio already exists") {
+            val portfolioRepository = with(logger) { portfolioRepository(database.get().portfoliosQueries) }
+            val portfolioCreated =
+                PortfolioCreated(
+                    PortfolioId("1"),
+                    NOW_MILLIS,
+                    UserId("rcardin"),
+                    Money(100.0),
+                )
+            portfolioRepository.insertPortfolio(portfolioCreated)
+            portfolioRepository.insertPortfolio(portfolioCreated)
+                .shouldBeLeft(PortfolioAlreadyExistsError(PortfolioId("1"), UserId("rcardin")))
         }
     }
 })
