@@ -11,15 +11,15 @@ import `in`.rcard.fes.portfolio.Quantity
 import `in`.rcard.fes.portfolio.Stock
 import `in`.rcard.fes.portfolio.UserId
 import `in`.rcard.fes.portfolio.eventType
+import `in`.rcard.fes.toListDuring
 import `in`.rcard.fes.withEventStoreDb
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldContainExactly
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
@@ -76,7 +76,7 @@ class PortfolioCreatedEventListenerTest : ShouldSpec({
                             portfolioEventsData.iterator(),
                         ).await()
                         val portfolioCreatedEventFlow = portfolioCreatedEventFlow(eventStoreDBClient)
-                        val actualEvent = portfolioCreatedEventFlow.take(2).toList()
+                        val actualEvent = portfolioCreatedEventFlow.toListDuring(Duration.ofSeconds(1L))
                         actualEvent.shouldContainExactly(rcardinPortfolioCreated, danielPortfolioCreated)
                     }
                 }
