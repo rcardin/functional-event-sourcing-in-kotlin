@@ -13,3 +13,6 @@ CREATE TABLE IF NOT EXISTS portfolios (
 
 insertPortfolio:
 INSERT INTO portfolios (portfolio_id, user_id, money, created_at, updated_at) VALUES ?;
+
+findPortfolioByPortfolioIdAndUserId:
+SELECT * FROM portfolios WHERE portfolio_id = ? AND user_id = ?;
